@@ -1,0 +1,9 @@
+{
+    "path" : "~/gendercitation",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}
