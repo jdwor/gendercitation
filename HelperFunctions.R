@@ -199,4 +199,65 @@ get.preferred=function(x){
     return(x)
   }
 }
-
+extract.initials=function(name){
+  name=gsub("[[:punct:][:blank:]]","",name)
+  name=gsub("[:a-z:]","",name)
+  return(name)
+}
+match.initials=function(x,first_names,last_names,allfirsts,alllasts){
+  authors=first_names[[x]]
+  need=which(toupper(authors)==authors)
+  if(length(need)==0){
+    return(authors)
+  }else{
+    for(i in need){
+      target.first=authors[i]
+      target.initials=extract.initials(target.first)
+      target.last=last_names[[x]][i]
+      others=which(tolower(target.last)==tolower(alllasts))
+      if(length(others)>1){
+        allsimilar.full=NULL
+        allsimilar.concat=NULL
+        allsimilar.clean=NULL
+        for(j in others){
+          samelast.full=allfirsts[j]
+          samelast.concat=tolower(gsub("[[:punct:][:blank:]]","",samelast.full))
+          samelast.clean=get.preferred(samelast.full)
+          samelast.initials=extract.initials(samelast.full)
+          if(samelast.full!=toupper(samelast.full) & 
+             (samelast.initials==target.initials)){
+            allsimilar.full=c(allsimilar.full,samelast.full)
+            allsimilar.concat=c(allsimilar.concat,samelast.concat)
+            allsimilar.clean=c(allsimilar.clean,samelast.clean)
+          }
+        }
+        unique.clean=unique(allsimilar.clean)
+        name.lengths=nchar(unique.clean)
+        longest=unique.clean[which.max(name.lengths)]
+        others=unique.clean[-which.max(name.lengths)]
+        contained=unlist(lapply(others,grepl,longest))
+        if(length(unique(allsimilar.concat))==1 |
+           length(unique(allsimilar.clean))==1){
+          matched.name=sort(table(allsimilar.full),decreasing=T)
+          matched.name=names(matched.name)[1]
+          authors[i]=matched.name
+        }else if(length(contained)>0 & 
+                 sum(contained)==length(contained)){
+          matched.name=sort(table(allsimilar.full),decreasing=T)
+          matched.name=names(matched.name)[1]
+          authors[i]=matched.name
+        }
+      }
+    }
+    return(authors)
+  }
+}
+find.variants=function(lastname,allfirsts,alllasts){
+  samelasts=unique(allfirsts[alllasts==lastname])
+  same.initials=substr(samelasts,1,1)
+  if(max(table(same.initials))>1){
+    return(1)
+  }else{
+    return(0)
+  }
+}
