@@ -5,7 +5,6 @@ library(pbmcapply)
 
 # Load in all-journal dataset from step 4
 load("df4_articledata_cleannames.RData")
-test
 
 # Read in dataset of common nicknames for variant matching
 # E.g., to match Ray Dolan to Raymond Dolan
