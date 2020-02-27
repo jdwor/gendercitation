@@ -6,9 +6,9 @@ library(pbmcapply)
 load("df4_articledata_cleannames.RData")
 
 nicknames=as.matrix(read.csv("nicknames.csv",header=F))
+nicknames=tolower(nicknames)
 namegends=read.csv("prelim.gends.for.matching.csv",
                    header=T,stringsAsFactors=F)[,-1]
-nicknames=tolower(nicknames)
 
 cores=detectCores()
 
@@ -29,11 +29,23 @@ allfirsts=as.vector(unlist(first_names))
 lastname_occurrences=table(alllasts)
 multiple_occurrences=lastname_occurrences[lastname_occurrences>1]
 
-may_have_variants=pbmclapply(names(multiple_occurrences),find.variants,
-                             allfirsts,alllasts,mc.cores=cores)
-may_have_variants=unlist(may_have_variants)
-
+may_have_variants=unlist(pbmclapply(names(multiple_occurrences),find.variants,
+                         allfirsts,alllasts,mc.cores=cores))
 may_have_variants=names(multiple_occurrences[may_have_variants==1])
 
+fn_matched=pbmclapply(1:length(first_names),match.variants.outer,
+                      first_names,last_names,allfirsts,alllasts,
+                      may_have_variants,mc.cores=cores)
+allfirsts_matched=as.vector(unlist(fn_matched))
 
+sort(unique(allfirsts[alllasts=="Dolan"]))
+sort(unique(allfirst_matched[alllasts=="Dolan"]))
+
+first_names=fn_matched; rm(fn_matched)
+fullnames_matched=pbmclapply(1:length(first_names),paste.first.last,
+                             first_names,last_names,mc.cores=cores)
+
+article.data$AF=unlist(fullnames_matched)
+
+save(article.data, file="df5_articledata_matchednames.RData")
 

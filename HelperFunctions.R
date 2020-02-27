@@ -261,3 +261,79 @@ find.variants=function(lastname,allfirsts,alllasts){
     return(0)
   }
 }
+match.gend=function(name,namegends){
+  which.name=which(namegends$name==name)
+  if(length(which.name)==1){
+    return(namegends$gend[which.name])
+  }else{
+    return(0.5)
+  }
+}
+match.variants.inner=function(name,allfirsts,alllasts,namegends){
+  first=name[1]; last=name[2]
+  samelast.full=unique(allfirsts[alllasts==last])
+  samelast.clean=unlist(lapply(subfirsts,get.preferred))
+  samelast.initials=extract.initials(samelast.full)
+  samelast.gends=unlist(lapply(samelast.clean,match.gend,namegends))
+  
+  name.index=which(samelast.full==first)
+  
+  this.full=samelast.full[name.index]
+  samelast.full=samelast.full[-name.index]
+  
+  this.clean=samelast.clean[name.index]
+  samelast.clean=samelast.clean[-name.index]
+  
+  this.initials=samelast.initials[name.index]
+  samelast.initials=samelast.initials[-name.index]
+  
+  this.gend=samelast.gends[name.index]
+  samelast.gends=samelast.gends[-name.index]
+  
+  this.nicknames=which(nicknames[,1]==tolower(this.clean))
+  this.nicknames=unique(as.vector(nicknames[this.nicknames,-1]))
+  this.nicknames=this.nicknames[this.nicknames!=""]
+  
+  matches=which((samelast.clean==this.clean | 
+                   tolower(samelast.clean)%in%this.nicknames) & 
+                grepl(this.initials,samelast.initials) & 
+                  ngends==tngend)
+  if(length(matches)==1){
+    if(nchar(samelast.full[matches])>nchar(first)){
+      return(samelast.full[matches])
+    }else{
+      return(first)
+    }
+  }else if(length(matches)>1){
+    sl.full.matches=samelast.full[matches]
+    sl.initials.matches=samelast.initials[matches]
+    initial.variants=gsub(this.initials,"",sl.initials.matches)
+    initial.variants=unique(initial.variants[initial.variants!=""])
+    if(length(initial.variants)<=1 & max(nchar(sl.full.matches))>nchar(first)){
+      return(sl.full.matches[which.max(nchar(sl.full.matches))])
+    }else{
+      return(first)
+    }
+  }else{
+    return(first)
+  }
+}
+match.variants.outer=function(x,first_names,last_names,allfirsts,
+                              alllasts,may_have_variants){
+  sub_firsts=first_names[[x]]
+  sub_lasts=last_names[[x]]
+  sub_with_variants=which(sub_lasts%in%may_have_variants)
+  if(length(sub_with_variants)>0){
+    needed_names=cbind(sub_firsts[sub_with_variants],
+                       sub_lasts[sub_with_variants])
+    matched_names=apply(needed_names,1,match.variants.inner,allfirsts,alllasts)
+    sub_firsts[sub_with_variants]=unlist(matched_names)
+  }
+  return(sub_firsts)
+}
+paste.first.last=function(x,first_names,last_names){
+  fn=first_names[[x]]
+  ln=last_names[[x]]
+  return(paste0(ln,", ",fn,collapse="; "))
+}
+
