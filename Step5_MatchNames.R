@@ -15,13 +15,13 @@ nicknames=tolower(nicknames)
 # Used to avoid matching e.g. Chris Smith & Christina Smith
 nickname.gends=read.csv("nickname.gends.csv",header=T,stringsAsFactors=F)[,-1]
 
-# Save out number of cores on machine
+# Save number of cores on machine
 # Note: Some of the functions in this step take a fair bit of compute power
 # This file should ideally be performed by parallelizing over many cores
 cores=detectCores()
 
 # Separate out author names and find entries with initials
-all_auth_names=lapply(as.list(data.frame$AF),strsplit,split="; ")
+all_auth_names=lapply(as.list(article.data$AF),strsplit,split="; ")
 first_names=pbmclapply(1:length(all_auth_names),get.all.given,
                        authlist=all_auth_names,mc.cores=cores)
 last_names=pbmclapply(1:length(all_auth_names),get.all.family,

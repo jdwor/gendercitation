@@ -3,8 +3,6 @@ source("HelperFunctions.R")
 library(pbmcapply);library(rvest)
 library(RJSONIO);library(textclean)
 
-testing changes
-
 # Change to the names of your journal folders within project folder
 journal_folders=c("journal1","journal2","journal3")
 

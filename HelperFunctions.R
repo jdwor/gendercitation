@@ -337,3 +337,21 @@ paste.first.last=function(x,first_names,last_names){
   return(paste0(ln,", ",fn,collapse="; "))
 }
 
+## New functions for Step6_BuildGenderData.R
+get.first.last=function(x){
+  fa=get.preferred(head(x,1))
+  la=get.preferred(tail(x,1))
+  return(c(fa,la))
+}
+
+## New functions for Step7_AssignGenders.R
+gend.to.auths=function(first_last_auths,namegends,threshold=0.7){
+  fa_index=which(namegends$name==first_last_auths[1])
+  la_index=which(namegends$name==first_last_auths[2])
+  
+  fa_gend=ifelse(namegends$prob.m[fa_index]>threshold,"M",
+                 ifelse(namegends$prob.w[fa_index]>threshold,"W","U"))
+  la_gend=ifelse(namegends$prob.m[la_index]>threshold,"M",
+                 ifelse(namegends$prob.w[la_index]>threshold,"W","U"))
+  return(paste0(fa_gend,la_gend))
+}
