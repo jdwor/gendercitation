@@ -355,3 +355,15 @@ gend.to.auths=function(first_last_auths,namegends,threshold=0.7){
                  ifelse(namegends$prob.w[la_index]>threshold,"W","U"))
   return(paste0(fa_gend,la_gend))
 }
+
+## New functions for Step8_PrepReferenceLists.R
+get.cited.indices=function(x,DI,CR){
+  cited.split=strsplit(CR[x]," ")[[1]]
+  cited.dois=which(cited.split=="DOI")+1
+  cited.dois=cited.split[cited.dois]
+  cited.dois=tolower(gsub(";|,|\\[|\\]","",cited.dois))
+  cited.dois=cited.dois[cited.dois!="doi"]
+  
+  cited.indices=paste(which(DI%in%cited.dois),collapse=", ")
+  return(cited.indices)
+}
