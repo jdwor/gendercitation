@@ -357,6 +357,9 @@ gend.to.auths=function(first_last_auths,namegends,threshold=0.7){
 }
 
 ## New functions for Step8_PrepReferenceLists.R
+authsplit=function(x){
+  strsplit(x,"; ")[[1]]
+}
 get.cited.indices=function(x,DI,CR){
   cited.split=strsplit(CR[x]," ")[[1]]
   cited.dois=which(cited.split=="DOI")+1
@@ -366,4 +369,17 @@ get.cited.indices=function(x,DI,CR){
   
   cited.indices=paste(which(DI%in%cited.dois),collapse=", ")
   return(cited.indices)
+}
+get.self.cites=function(x,first_auths,last_auths){
+  these_auths=c(first_auths[[x]],last_auths[[x]])
+  
+  self=paste(which(first_auths%in%these_auths | 
+                     last_auths%in%these_auths),collapse=", ")
+  return(self)
+}
+transform.cat=function(x){
+  ifelse(x=="MM",0,
+         ifelse(x=="WM",1,
+                ifelse(x=="MW",2,
+                       ifelse(x=="WW",3,NA))))
 }
