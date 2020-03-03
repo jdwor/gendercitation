@@ -23,11 +23,6 @@ cited.papers=pbmclapply(1:nrow(article.data),get.cited.indices,
 self.authored=pbmclapply(1:length(first_auths),get.self.cites,
                          first_auths,last_auths,mc.cores=cores)
 
-# Create new variables in article.data that give a list of cited papers (CP)
-# and a list of other self-authored papers in the dataset (SA)
-article.data$CP=unlist(cited.papers)
-article.data$SA=unlist(self.authored)
-
 # Isolate author information
 all_auth_names=lapply(article.data$AF,authsplit)
 
@@ -39,6 +34,14 @@ log_teamsize=log(lengths(all_auth_names))
 journal=article.data$SO
 month_from_base=(article.data$PY-min(article.data$PY))+(article.data$PD/12)
 gender_cat=unlist(pbmclapply(article.data$AG,transform.cat,mc.cores=cores))
+
+# Create new variables in article.data for new measures
+article.data$LS=log_seniority
+article.data$LT=log_teamsize
+article.data$MB=month_from_base
+article.data$GC=gender_cat
+article.data$CP=unlist(cited.papers)
+article.data$SA=unlist(self.authored)
 
 # Get unconditional gender proportions of citable papers (random draw model)
 # I.e., proportions for each gender category among all papers 
@@ -52,6 +55,8 @@ uncond_expecs=do.call(rbind,uncond_expecs)
 
 # Run GAM for predicted gender categories given relevant article characteristics
 # To be used for estimating expected conditional citation proportions in step 9
+# Note: Some settings on the GAM should be checked manually (e.g., spline DFs)
+# See the documentation by running "?gam"
 genderGAM=gam(list(gender_cat~s(month_from_base)+s(log_seniority)+
                     s(log_teamsize)+journal+review,
                   ~s(month_from_base)+s(log_seniority)+

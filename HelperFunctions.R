@@ -397,3 +397,32 @@ match.uncond.exp=function(x,uncond_expecs,unique_months){
   return(uncond_expecs[[which(unique_months==x)]])
 }
 
+## New functions for Step9_GetReferenceMeasures.R
+get.ref.props=function(x,article.data,uncond_expecs,cond_expecs){
+  cited.papers=strsplit(article.data$CP[x],", ")[[1]]
+  self.authored=strsplit(article.data$SA[x],", ")[[1]]
+  cited.notself=cited.papers[!(cited.papers%in%self.authored)]
+  cited.notself=cited.notself[!is.na(article.data$GC[cited.notself])]
+  if(length(cited.notself)>0){
+    cited.genders=article.data$GC[cited.notself]
+    gender.table=table(factor(cited.genders,lev=0:3))
+    observed.props=gender.table/sum(gender.table)
+    uncond.exp.props=uncond_expecs[x,]
+    
+    if(length(cited.notself)>1){
+      cond.exp.props=apply(cond_expecs[cited.notself,],2,mean)
+    }else{
+      cond.exp.props=cond_expecs[cited.notself,]
+    }
+    
+    return(c(as.numeric(observed.props),
+             as.numeric(uncond.exp.props),
+             as.numeric(cond.exp.props),
+             length(cited.notself)))
+  }else{
+    return(c(rep(NA,12),0))
+  }
+}
+
+
+
