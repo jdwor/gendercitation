@@ -19,12 +19,14 @@ cited.papers=pbmclapply(1:nrow(article.data),get.cited.indices,
                         DI=article.data$DI,CR=article.data$CR,
                         mc.cores=cores)
 
+# Isolate author information
+all_auth_names=lapply(article.data$AF,authsplit)
+first_auths=unlist(lapply(all_auth_names,head,1))
+last_auths=unlist(lapply(all_auth_names,tail,1))
+
 # Find potential self-citations
 self.authored=pbmclapply(1:length(first_auths),get.self.cites,
                          first_auths,last_auths,mc.cores=cores)
-
-# Isolate author information
-all_auth_names=lapply(article.data$AF,authsplit)
 
 # Get variables for article gender model
 num_papers=unlist(lapply(self.authored,str_count, ", "))+1

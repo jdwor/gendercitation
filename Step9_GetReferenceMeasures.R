@@ -1,7 +1,8 @@
 setwd("path/to/project/folder") # Change to your project folder path
 source("HelperFunctions.R")
+library(pbmcapply)
 
-# Load in article dataset from step 8
+# Load in data from step 8
 load("df8_articledata_expecdata.RData")
 
 # Save number of cores on machine
