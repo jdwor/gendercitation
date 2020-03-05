@@ -424,5 +424,64 @@ get.ref.props=function(x,article.data,uncond_expecs,cond_expecs){
   }
 }
 
+## New functions for Step10_GetNetworkMeasures.R
+get.prev.coauths=function(x,first_auths,last_auths,all_auth_names,month_from_base){
+  fa_name=first_auths[[x]]
+  la_name=last_auths[[x]]
+  this_month=month_from_base[x]
+  
+  auths_in=which(sapply(seq_along(all_auth_names),
+                     function(y){month_from_base[y]<=this_month &
+                       (fa_name %in% all_auth_names[[y]] | 
+                          la_name %in% all_auth_names[[y]])}))
+  prev_coauths=unique(unlist(all_auth_names[auths_in]))
+  prev_coauths=prev_coauths[!(prev_coauths%in%c(fa_name,la_name))]
+  return(prev_coauths)
+}
+get.ma.overrep=function(x,prev_coauths,all_auth_names,month_from_base,author_gends){
+  this_month=month_from_base[x]
+  
+  prev_coauth=prev_coauths[[x]]
+  prev_coauth_gends=author_gends$gend[author_gends$name%in%prev_coauth]
+  
+  if(length(prev_coauth_gends)>0){
+    pc_man_prop=sum(prev_coauth_gends=="M")/sum(prev_coauth_gends!="U")
+    
+    whole_field=unique(unlist(all_auth_names[month_from_base<=this_month]))
+    whole_field_gends=author_gends$gend[author_gends$name%in%whole_field]
+    wf_man_prop=sum(whole_field_gends=="M")/sum(whole_field_gends!="U")
+    
+    return(pc_man_prop-wf_man_prop)
+  }else{
+    return(NA)
+  }
+}
+get.mmp.overrep=function(x,prev_coauths,all_auth_names,month_from_base,article_gends){
+  this_month=month_from_base[x]
+  
+  prev_coauth=prev_coauths[[x]]
+  pc_papers=sapply(seq_along(all_auth_names),
+                   function(x){prev_coath %in% all_auth_names[[x]]})
+  if(is.null(nrow(pc_papers))){
+    pc_papers=which(pc_papers>0 & month_from_base<this_month)
+  }else{
+    pc_papers=apply(pc_papers,2,sum)
+    pc_papers=which(pc_papers>0 & month_from_base<this_month)
+  }
+  
+  if(length(pc_papers)>0){
+    pc_paper_gends=article_gends[pc_papers]
+    pc_mm_prop=sum(pc_paper_gends=="MM")/sum(!grepl("U",pc_paper_gends))
+    
+    all_paper_gends=article_gends[month_from_base<this_month]
+    all_mm_prop=sum(all_paper_gends=="MM")/sum(!grepl("U",all_paper_gends))
+    
+    return(pc_mm_prop-all_mm_prop)
+  }else{
+    return(NA)
+  }
+}
+
+
 
 
