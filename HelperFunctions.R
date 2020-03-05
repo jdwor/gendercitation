@@ -482,6 +482,278 @@ get.mmp.overrep=function(x,prev_coauths,all_auth_names,month_from_base,article_g
   }
 }
 
-
+## New functions for Step11_RunAnalyses.R
+citegap=function(ref_proportions,i=NULL,type='conditional'){
+  if(is.null(i)){i=1:nrow(ref_proportions)}
+  if(type=='conditional'){
+    out=apply(ref_proportions[i,1:4],2,sum)/
+      apply(ref_proportions[i,9:12],2,sum)-1
+  }else if(type=='randomdraw'){
+    out=apply(ref_proportions[i,1:4],2,sum)/
+      apply(ref_proportions[i,5:8],2,sum)-1
+  }else{
+    stop("'type' must be either 'conditional' or 'randomdraw'")
+  }
+  names(out)=c("MM","WM","MW","WW")
+  return(out)
+}
+netgap=function(network_measure,i=NULL,groups,cites,verbose=F){
+  if(is.null(i)){i=1:length(network.measure)}
+  network.measure=network.measure[i]
+  groups=groups[i]
+  cites=cites[i]
+  vals=suppressWarnings(summary(rq(network.measure~groups,
+                                   weights=cites)))
+  vals=as.numeric(vals$coefficients[1:4,1])
+  vals=c(vals[1],vals[2:4]+vals[1])
+  if(verbose==T){
+    names(vals)=c("Among MM","Among WM","Among MW","Among WW")
+    return(vals)
+  }else{
+    return(vals)
+  }
+  
+}
+medover=function(mm_overcite,i=NULL,groups,cites,verbose=F,
+                 network=F,ma_overrep=NULL,mmp_overrep=NULL){
+  if(is.null(i)){i=1:length(mm_overcite)}
+  mm_overcite=mm_overcite[i]
+  groups=groups[i]
+  cites=cites[i]
+  if(network==F){
+    vals=suppressWarnings(summary(rq(mm_overcite~groups,
+                                     weights=cites)))
+  }else if(network==T){
+    if(!is.null(ma_overrep) & !is.null(mmp_overrep)){
+      ma_overrep=ma_overrep[i]
+      mmp_overrep=mmp_overrep[i]
+      vals=suppressWarnings(summary(rq(mm_overcite~groups+
+                                         ma_overrep+mmp_overrep,
+                                       weights=cites)))
+    }else{
+      stop("Must include ma_overrep and mmp_overrep")
+    }
+  }
+  vals=as.numeric(vals$coefficients[1:4,1])
+  vals=c(vals[1],vals[2:4]+vals[1])
+  if(verbose==T){
+    names(vals)=c("Among MM","Among WM","Among MW","Among WW")
+    return(vals)
+  }else{
+    return(vals)
+  }
+}
+citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
+  if(is.null(i)){i=1:nrow(citation.totals)}
+  unique.years=sort(unique(years),decreasing=F)
+  years=years[i]
+  citation.totals=citation.totals[i,]
+  if(return=='all'){
+    year.vals=matrix(0,nrow=length(unique.years),ncol=4)
+    for(j in 1:length(unique.years)){
+      tyear=unique.years[j]
+      year.vals[j,]=apply(citation.totals[years==tyear,1:4],2,sum)/
+        apply(citation.totals[years==tyear,9:12],2,sum)-1
+    }
+    out=year.vals
+  }else if(return=='mm'){
+    year.vals=rep(0,length(unique.years))
+    for(j in 1:length(unique.years)){
+      tyear=unique.years[j]
+      year.vals[j]=(sum(citation.totals[years==tyear,1])-
+                      sum(citation.totals[years==tyear,9]))/
+        sum(apply(citation.totals[years==tyear,9:12],2,sum))
+    }
+    out=summary(lm(year.vals~unique.years))$coefficients[2,1]
+    out=round(out*100,6)
+    names(out)=c("MM overcitation yearly trend (perc. points)")
+  }else{
+    stop("'return' must be either 'mm' or 'all'")
+  }
+  return(out)
+}
+citegap.temp2=function(citation.totals,i=NULL,years){
+  if(is.null(i)){i=1:nrow(citation.totals)}
+  unique.years=sort(unique(years),decreasing=F)
+  years=years[i]
+  citation.totals=citation.totals[i,]
+  
+  year.vals=matrix(0,nrow=length(unique.years),ncol=8)
+  for(j in 1:length(unique.years)){
+    tyear=unique.years[j]
+    obs=apply(citation.totals[years==tyear,1:4],2,sum)
+    exp=apply(citation.totals[years==tyear,9:12],2,sum)
+    tot=sum(obs)
+    year.vals[j,]=c(obs/tot,exp/tot)
+  }
+  out=year.vals
+  
+  return(out)
+}
+netgap.temp=function(network.measure,i=NULL,groups,cites,years){
+  if(is.null(i)){i=1:length(network.measure)}
+  unique.years=sort(unique(years),decreasing=F)
+  network.measure=network.measure[i]
+  groups=groups[i]
+  cites=cites[i]
+  years=years[i]
+  
+  year.vals=matrix(0,nrow=length(unique.years),ncol=4)
+  for(j in 1:length(unique.years)){
+    tyear=unique.years[j]
+    vals=c(median(rep(network.measure[years==tyear & groups=="mm"],
+                      cites[years==tyear & groups=="mm"]),na.rm=T),
+           median(rep(network.measure[years==tyear & groups=="wm"],
+                      cites[years==tyear & groups=="wm"]),na.rm=T),
+           median(rep(network.measure[years==tyear & groups=="mw"],
+                      cites[years==tyear & groups=="mw"]),na.rm=T),
+           median(rep(network.measure[years==tyear & groups=="ww"],
+                      cites[years==tyear & groups=="ww"]),na.rm=T))
+    year.vals[j,]=vals
+  }
+  out=year.vals
+  
+  return(out)
+}
+get.plotdf=function(boot){
+  plotdf=data.frame(Group=c("Man &\nMan","Woman &\nMan",
+                            "Man &\nWoman","Woman &\nWoman"),
+                    Prop=boot$t0,SE=apply(boot$t,2,sd))
+  plotdf$Group<-factor(plotdf$Group,
+                       levels=c("Man &\nMan","Woman &\nMan",
+                                "Man &\nWoman","Woman &\nWoman"))
+  return(plotdf)
+}
+get.plotdf.temp=function(boot){
+  plotdf=data.frame(Group=rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
+                                "Woman &\nWoman"),each=10),Year=rep(2009:2018,4),
+                    Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
+  plotdf$Group<-factor(plotdf$Group,
+                       levels=c("Man &\nMan","Woman &\nMan",
+                                "Man &\nWoman","Woman &\nWoman"))
+  return(plotdf)
+}
+get.plotdf.temp2=function(boot){
+  plotdf=data.frame(Year=rep(2009:2018,8),
+                    Type=c(rep("Observed",40),rep("Expected",40)),
+                    Group=rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
+                                "Woman &\nWoman"),each=10),
+                    Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
+  plotdf$Group<-factor(plotdf$Group,
+                       levels=c("Man &\nMan","Woman &\nMan",
+                                "Man &\nWoman","Woman &\nWoman"))
+  
+  plotdf=as.data.table(plotdf)
+  plotdf[Group=="Man &\nMan",y_min:=0.56]
+  plotdf[Group=="Man &\nMan",y_max:=0.66]
+  plotdf[Group=="Woman &\nMan",y_min:=0.20]
+  plotdf[Group=="Woman &\nMan",y_max:=0.27]
+  plotdf[Group=="Man &\nWoman",y_min:=0.077]
+  plotdf[Group=="Man &\nWoman",y_max:=0.103]
+  plotdf[Group=="Woman &\nWoman",y_min:=0.04]
+  plotdf[Group=="Woman &\nWoman",y_max:=0.08]
+  
+  return(plotdf)
+}
+f2plot=function(data,title,yl=T,xl=T,all=F,shortlab=F){
+  p=ggplot(data,aes(x=Group, y=Prop, fill=Group))+
+    geom_bar(stat="identity", color="black",position=position_dodge())+
+    geom_errorbar(aes(ymin=(Prop-SE),
+                      ymax=(Prop+SE)),width=.2)+
+    theme_bw()+theme(legend.position="n")+
+    geom_hline(yintercept=0,color='black',lty=1)+
+    ggtitle(title)
+  if(xl==T){
+    p=p+xlab("Cited authors' gender (first & last)")
+  }else{
+    p=p+xlab(NULL)
+  }
+  if(shortlab==T){
+    p=p+xlab("Cited authors")+
+      scale_fill_manual(values=c("Overall"="gray24",
+                                 "MM"="darkslateblue",
+                                 "WM"="darkslategray4",
+                                 "MW"="lightcyan3",
+                                 "WW"="lightsalmon3"))
+  }else{
+    p=p+scale_fill_manual(values=c("Overall"="gray24",
+                                   "Man &\nMan"="darkslateblue",
+                                   "Woman &\nMan"="darkslategray4",
+                                   "Man &\nWoman"="lightcyan3",
+                                   "Woman &\nWoman"="lightsalmon3"))
+  }
+  if(yl==T){
+    p=p+ylab("Percent over/undercitation")
+  }else{
+    p=p+ylab(NULL)
+  }
+  if(all==T){
+    p=p+scale_y_continuous(breaks=seq(-.30,.30,.15),
+                           labels=c("-30%","-15%","0%","+15%","+30%"),
+                           limits=c(-.31,.31))
+  }else{
+    p=p+scale_y_continuous(breaks=seq(-.4,.4,.2),
+                           labels=c("-40%","-20%","0%","+20%","+40%"),
+                           limits=c(-.4,.4))
+  }
+}
+f4Aplot=function(data,title){
+  p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
+    geom_line()+
+    geom_point()+
+    geom_errorbar(aes(ymin=(Prop-SE),
+                      ymax=(Prop+SE)),width=.2)+
+    theme_bw()+theme(legend.position="n")+
+    #ylab("Citation gap (obs % / exp %)")+
+    ggtitle(title)+geom_hline(yintercept=0,color='black',lty=2)+
+    scale_color_manual(values=c("Overall"="gray24",
+                                "Man &\nMan"="darkslateblue",
+                                "Woman &\nMan"="darkslategray4",
+                                "Man &\nWoman"="lightcyan3",
+                                "Woman &\nWoman"="lightsalmon3"))+
+    ylab("Percent over/undercitation")+xlab("Year")+
+    scale_y_continuous(breaks=seq(-.4,.4,.2),
+                       labels=c("-40%","-20%","0%","+20%","+40%"),
+                       limits=c(-.4,.4))
+  return(p)
+}
+f4Bplot=function(data,title){
+  p=ggplot(data,aes(x=Year, y=Prop, color=Group, lty=Type))+
+    geom_line()+geom_point()+
+    geom_errorbar(aes(ymin=(Prop-SE),ymax=(Prop+SE)),width=.2)+
+    facet_wrap(~Group, scales="free", nrow=2)+
+    geom_blank(aes(y = data$y_min))+
+    geom_blank(aes(y = data$y_max))+
+    theme_bw()+ggtitle(title)+
+    scale_color_manual(values=c("Overall"="gray24",
+                                "Man &\nMan"="darkslateblue",
+                                "Woman &\nMan"="darkslategray4",
+                                "Man &\nWoman"="lightcyan3",
+                                "Woman &\nWoman"="lightsalmon3"))+
+    scale_linetype_manual(values=c("Observed"="solid","Expected"="dashed"))+
+    ylab("Proportion of citations")+xlab("Year")+
+    theme(legend.position="n",strip.background = element_blank(),
+          strip.text.x = element_blank())
+  return(p)
+}
+f5plot=function(data,title){
+  p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
+    geom_line()+
+    geom_point()+
+    geom_errorbar(aes(ymin=(Prop-SE),
+                      ymax=(Prop+SE)),width=.2)+
+    theme_bw()+theme(legend.position="bottom")+
+    ggtitle(title)+geom_hline(yintercept=0,color='black',lty=2)+
+    scale_color_manual(values=c("Man &\nMan"="#FDBC53",
+                                "Woman &\nMan"="#798081",
+                                "Man &\nWoman"="#95D5B2",
+                                "Woman &\nWoman"="steelblue3"),
+                       name="Citing\nauthors")+
+    ylab("Median overrepresentation")+xlab("Year")+
+    scale_y_continuous(breaks=seq(-.1,.1,.05),
+                       labels=c("-0.10","-0.05","0.00","0.05","0.10"),
+                       limits=c(-.1,.1))
+  return(p)
+}
 
 

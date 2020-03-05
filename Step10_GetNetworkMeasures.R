@@ -35,7 +35,6 @@ mmp_overrep=pbmclapply(1:length(all_auth_names),get.mmp.overrep,prev_coauths,
                        all_auth_names,month_from_base,article_gends,mc.cores=cores)
 mmp_overrep=unlist(mmp_overrep)
 
-
 # Save article data, citation proportion data, and network data
 save(article.data,uncond_expecs,cond_expecs,ref_proportions,
      ma_overrep,mmp_overrep,file="df10_articledata_propdata_netdata.RData")
