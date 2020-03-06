@@ -362,7 +362,7 @@ authsplit=function(x){
 }
 get.cited.indices=function(x,DI,CR){
   cited.split=strsplit(CR[x]," ")[[1]]
-  cited.dois=which(cited.split=="DOI")+1
+  cited.dois=which(cited.split=="doi")+1
   cited.dois=cited.split[cited.dois]
   cited.dois=tolower(gsub(";|,|\\[|\\]","",cited.dois))
   cited.dois=cited.dois[cited.dois!="doi"]
@@ -401,7 +401,7 @@ match.uncond.exp=function(x,uncond_expecs,unique_months){
 get.ref.props=function(x,article.data,uncond_expecs,cond_expecs){
   cited.papers=strsplit(article.data$CP[x],", ")[[1]]
   self.authored=strsplit(article.data$SA[x],", ")[[1]]
-  cited.notself=cited.papers[!(cited.papers%in%self.authored)]
+  cited.notself=as.numeric(cited.papers[!(cited.papers%in%self.authored)])
   cited.notself=cited.notself[!is.na(article.data$GC[cited.notself])]
   if(length(cited.notself)>0){
     cited.genders=article.data$GC[cited.notself]
@@ -430,10 +430,14 @@ get.prev.coauths=function(x,first_auths,last_auths,all_auth_names,month_from_bas
   la_name=last_auths[[x]]
   this_month=month_from_base[x]
   
-  auths_in=which(sapply(seq_along(all_auth_names),
-                     function(y){month_from_base[y]<=this_month &
-                       (fa_name %in% all_auth_names[[y]] | 
-                          la_name %in% all_auth_names[[y]])}))
+  auths_in=rep(FALSE,length(all_auth_names))
+  sub_auth_names=all_auth_names[month_from_base<=this_month]
+  auths_in_sub=sapply(seq_along(sub_auth_names),
+                      function(y){c(fa_name,la_name) %in% sub_auth_names[[y]]})
+  auths_in_sub=apply(auths_in_sub,2,sum)>0
+  auths_in[month_from_base<=this_month]=auths_in_sub
+  auths_in=which(auths_in)
+  
   prev_coauths=unique(unlist(all_auth_names[auths_in]))
   prev_coauths=prev_coauths[!(prev_coauths%in%c(fa_name,la_name))]
   return(prev_coauths)
@@ -460,13 +464,18 @@ get.mmp.overrep=function(x,prev_coauths,all_auth_names,month_from_base,article_g
   this_month=month_from_base[x]
   
   prev_coauth=prev_coauths[[x]]
-  pc_papers=sapply(seq_along(all_auth_names),
-                   function(x){prev_coath %in% all_auth_names[[x]]})
-  if(is.null(nrow(pc_papers))){
-    pc_papers=which(pc_papers>0 & month_from_base<this_month)
+  
+  pc_papers=rep(0,length(all_auth_names))
+  sub_auth_names=all_auth_names[month_from_base<this_month]
+  
+  pc_papers_sub=sapply(seq_along(sub_auth_names),
+                       function(x){prev_coauth %in% sub_auth_names[[x]]})
+  if(is.null(nrow(pc_papers_sub))){
+    pc_papers[month_from_base<this_month]=pc_papers_sub
+    pc_papers=which(pc_papers>0)
   }else{
-    pc_papers=apply(pc_papers,2,sum)
-    pc_papers=which(pc_papers>0 & month_from_base<this_month)
+    pc_papers[month_from_base<this_month]=apply(pc_papers_sub,2,sum)
+    pc_papers=which(pc_papers>0)
   }
   
   if(length(pc_papers)>0){
@@ -483,6 +492,13 @@ get.mmp.overrep=function(x,prev_coauths,all_auth_names,month_from_base,article_g
 }
 
 ## New functions for Step11_RunAnalyses.R
+transform.cat.4=function(x){
+  ifelse(x%in%c("MM","WM","MW","WW"),x,"NA")
+}
+transform.cat.2=function(x){
+  ifelse(x=="MM",x,
+         ifelse(x%in%c("WM","MW","WW"),"W|W","NA"))
+}
 citegap=function(ref_proportions,i=NULL,type='conditional'){
   if(is.null(i)){i=1:nrow(ref_proportions)}
   if(type=='conditional'){
@@ -498,11 +514,11 @@ citegap=function(ref_proportions,i=NULL,type='conditional'){
   return(out)
 }
 netgap=function(network_measure,i=NULL,groups,cites,verbose=F){
-  if(is.null(i)){i=1:length(network.measure)}
-  network.measure=network.measure[i]
+  if(is.null(i)){i=1:length(network_measure)}
+  network_measure=network_measure[i]
   groups=groups[i]
   cites=cites[i]
-  vals=suppressWarnings(summary(rq(network.measure~groups,
+  vals=suppressWarnings(summary(rq(network_measure~groups,
                                    weights=cites)))
   vals=as.numeric(vals$coefficients[1:4,1])
   vals=c(vals[1],vals[2:4]+vals[1])
@@ -590,10 +606,10 @@ citegap.temp2=function(citation.totals,i=NULL,years){
   
   return(out)
 }
-netgap.temp=function(network.measure,i=NULL,groups,cites,years){
-  if(is.null(i)){i=1:length(network.measure)}
+netgap.temp=function(network_measure,i=NULL,groups,cites,years){
+  if(is.null(i)){i=1:length(network_measure)}
   unique.years=sort(unique(years),decreasing=F)
-  network.measure=network.measure[i]
+  network_measure=network_measure[i]
   groups=groups[i]
   cites=cites[i]
   years=years[i]
@@ -601,14 +617,14 @@ netgap.temp=function(network.measure,i=NULL,groups,cites,years){
   year.vals=matrix(0,nrow=length(unique.years),ncol=4)
   for(j in 1:length(unique.years)){
     tyear=unique.years[j]
-    vals=c(median(rep(network.measure[years==tyear & groups=="mm"],
-                      cites[years==tyear & groups=="mm"]),na.rm=T),
-           median(rep(network.measure[years==tyear & groups=="wm"],
-                      cites[years==tyear & groups=="wm"]),na.rm=T),
-           median(rep(network.measure[years==tyear & groups=="mw"],
-                      cites[years==tyear & groups=="mw"]),na.rm=T),
-           median(rep(network.measure[years==tyear & groups=="ww"],
-                      cites[years==tyear & groups=="ww"]),na.rm=T))
+    vals=c(median(rep(network_measure[years==tyear & groups=="MM"],
+                      cites[years==tyear & groups=="MM"]),na.rm=T),
+           median(rep(network_measure[years==tyear & groups=="WM"],
+                      cites[years==tyear & groups=="WM"]),na.rm=T),
+           median(rep(network_measure[years==tyear & groups=="MW"],
+                      cites[years==tyear & groups=="MW"]),na.rm=T),
+           median(rep(network_measure[years==tyear & groups=="WW"],
+                      cites[years==tyear & groups=="WW"]),na.rm=T))
     year.vals[j,]=vals
   }
   out=year.vals

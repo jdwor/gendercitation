@@ -17,9 +17,10 @@ has_citations=ref_proportions[,13]>0
 subset_articles=time_window & has_citations
 
 ## Create gender category vectors
-gend_group_4=article.data$AG
-gend_group_2=gend_group_4
-gend_group_2[gend_group_2%in%c("WM","MW","WW")]="W|W"
+gend_group_4=unlist(lapply(article.data$AG,transform.cat.4))
+gend_group_4=factor(gend_group_4,lev=c("MM","WM","MW","WW","NA"))
+gend_group_2=unlist(lapply(article.data$AG,transform.cat.2))
+gend_group_2=factor(gend_group_2,lev=c("MM","W|W","NA"))
 
 #########################################################
 ## Calculate citation gaps across cited author genders ##
@@ -27,20 +28,21 @@ gend_group_2[gend_group_2%in%c("WM","MW","WW")]="W|W"
 
 # Get subset of ref_proportions data
 ref_prop_sub=ref_proportions[subset_articles,]
+ref_tot_sub=ref_prop_sub[,1:12]*ref_prop_sub[,13]
 
 # Gap relative to overall literature
-citegap(ref_prop_sub,type='randomdraw')
+citegap(ref_tot_sub,type='randomdraw')
 
 # Gap conditional on papers' characteristics
-citegap(ref_prop_sub,type='conditional')
+citegap(ref_tot_sub,type='conditional')
 
 ###################################
 ## Recreate graphs from Figure 2 ##
 ###################################
 
 # Get bootstrap standard errors for gap values
-boot.rd=boot(ref_prop_sub,citegap,R=500,type='randomdraw')
-boot.cn=boot(ref_prop_sub,citegap,R=500,type='conditional')
+boot.rd=boot(ref_tot_sub,citegap,R=500,type='randomdraw')
+boot.cn=boot(ref_tot_sub,citegap,R=500,type='conditional')
 
 # Create ggplot compatible data frames
 plot.df.randomdraw=get.plotdf(boot.rd)
@@ -57,30 +59,30 @@ p.all.cn
 ##################################################
 
 # Get subset of group labels
-gend2_sub=gend_group_2[subset_articles,]
-gend4_sub=gend_group_4[subset_articles,]
+gend2_sub=gend_group_2[subset_articles]
+gend4_sub=gend_group_4[subset_articles]
 
 # Gap within reference lists of MM papers
-citegap(ref_prop_sub[gend2_sub=="MM",],type='conditional')
+citegap(ref_tot_sub[gend2_sub=="MM",],type='conditional')
 
 # Gap within reference lists of W|W papers
-citegap(ref_prop_sub[gend2_sub=="W|W",],type='conditional')
+citegap(ref_tot_sub[gend2_sub=="W|W",],type='conditional')
 
 # Gap within subgroups of W|W papers
-citegap(ref_prop_sub[gend4_sub=="WM",],type='conditional')
-citegap(ref_prop_sub[gend4_sub=="MW",],type='conditional')
-citegap(ref_prop_sub[gend4_sub=="WW",],type='conditional')
+citegap(ref_tot_sub[gend4_sub=="WM",],type='conditional')
+citegap(ref_tot_sub[gend4_sub=="MW",],type='conditional')
+citegap(ref_tot_sub[gend4_sub=="WW",],type='conditional')
 
 ###################################
 ## Recreate graphs from Figure 3 ##
 ###################################
 
 # Get bootstrap standard errors for gap values
-boot.mm=boot(ref_prop_sub[gend2_sub=="MM",],citegap,R=500)
-boot.worw=boot(ref_prop_sub[gend2_sub=="W|W",],citegap,R=500)
-boot.wm=boot(ref_prop_sub[gend4_sub=="WM",],citegap,R=500)
-boot.mw=boot(ref_prop_sub[gend4_sub=="MW",],citegap,R=500)
-boot.ww=boot(ref_prop_sub[gend4_sub=="WW",],citegap,R=500)
+boot.mm=boot(ref_tot_sub[gend2_sub=="MM",],citegap,R=500)
+boot.worw=boot(ref_tot_sub[gend2_sub=="W|W",],citegap,R=500)
+boot.wm=boot(ref_tot_sub[gend4_sub=="WM",],citegap,R=500)
+boot.mw=boot(ref_tot_sub[gend4_sub=="MW",],citegap,R=500)
+boot.ww=boot(ref_tot_sub[gend4_sub=="WW",],citegap,R=500)
 
 # Create ggplot compatible data frames
 plot.df.mm=get.plotdf(boot.mm)
@@ -106,17 +108,17 @@ p.ww
 #####################################################
 
 # Get subset of year labels
-year_sub=article.data$PY[subset_articles,]
+year_sub=article.data$PY[subset_articles]
 
 # Yearly MM overcitation trend within all reference lists
-citegap.temp(ref_prop_sub,years=year_sub)
+citegap.temp(ref_tot_sub,years=year_sub)
 
 # Yearly MM overcitation trend within MM reference lists
-citegap.temp(ref_prop_sub[gend2_sub=="MM",],
+citegap.temp(ref_tot_sub[gend2_sub=="MM",],
              years=year_sub[gend2_sub=="MM"])
 
 # Yearly MM overcitation trend within W|W lists
-citegap.temp(ref_prop_sub[gend2_sub=="W|W",],
+citegap.temp(ref_tot_sub[gend2_sub=="W|W",],
              years=year_sub[gend2_sub=="W|W"])
 
 ####################################
@@ -124,9 +126,9 @@ citegap.temp(ref_prop_sub[gend2_sub=="W|W",],
 ####################################
 
 # Get bootstrap standard errors for gap values
-boot.mm.temp=boot(ref_prop_sub[gend2_sub=="MM",],citegap.temp,
+boot.mm.temp=boot(ref_tot_sub[gend2_sub=="MM",],citegap.temp,
                   years=year_sub[gend2_sub=="MM"],return="all",R=500)
-boot.worw.temp=boot(ref_prop_sub[gend2_sub=="W|W",],citegap.temp,
+boot.worw.temp=boot(ref_tot_sub[gend2_sub=="W|W",],citegap.temp,
                     years=year_sub[gend2_sub=="W|W"],return="all",R=500)
 
 # Create ggplot compatible data frames
@@ -144,9 +146,9 @@ p.worw.temp
 ####################################
 
 # Get bootstrap standard errors for gap values
-boot.mm.temp2=boot(ref_prop_sub[gend2_sub=="MM",],citegap.temp2,
+boot.mm.temp2=boot(ref_tot_sub[gend2_sub=="MM",],citegap.temp2,
                    years=year_sub[gend2_sub=="MM"],R=500)
-boot.worw.temp2=boot(ref_prop_sub[gend2_sub=="W|W",],citegap.temp2,
+boot.worw.temp2=boot(ref_tot_sub[gend2_sub=="W|W",],citegap.temp2,
                      years=year_sub[gend2_sub=="W|W"],R=500)
 
 # Create ggplot compatible data frames

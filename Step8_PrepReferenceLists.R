@@ -6,7 +6,7 @@ library(textclean)
 # Load in article dataset from step 7
 load("df7_articledata_withgenders.RData")
 
-# Clean up reference list column
+# Clean up reference list column (may take a little while)
 Encoding(article.data$CR)="latin1"
 article.data$CR=replace_non_ascii(article.data$CR)
 article.data$CR=tolower(article.data$CR)
@@ -65,7 +65,7 @@ genderGAM=gam(list(gender_cat~s(month_from_base)+s(log_seniority)+
                     s(log_teamsize)+journal+review,
                   ~s(month_from_base)+s(log_seniority)+
                     s(log_teamsize)+journal+review),family=multinom(K=3))
-cond_expecs=predict(genderGam,newdata=data.frame(month_from_base=month_from_base,
+cond_expecs=predict(genderGAM,newdata=data.frame(month_from_base=month_from_base,
                     log_seniority=log_seniority,log_teamsize=log_teamsize,
                     journal=journal,review=review),type="response")
 
