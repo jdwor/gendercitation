@@ -62,7 +62,7 @@ allfirsts_matched=as.vector(unlist(fn_matched))
 # Test out whether it worked as expected by comparing variants before/after
 # Can substitute Dolan for any name in your dataset that had variants
 sort(unique(allfirsts[alllasts=="Dolan"]))
-sort(unique(allfirst_matched[alllasts=="Dolan"]))
+sort(unique(allfirsts_matched[alllasts=="Dolan"]))
 
 # Create new first names list, and concatenate first and last names
 first_names=fn_matched; rm(fn_matched)
