@@ -38,6 +38,13 @@ if("df6_namegends.RData"%in%list.files()){
   namegends$prob.m[initials==T]=-1
   namegends$prob.w[initials==T]=-1
   
+  # Fill in some data using pre-built common names database
+  commonnames=read.csv("CommonNamesDatabase.csv",stringsAsFactors=F)[,-1]
+  names_in_common=which(namegends$name%in%commonnames$name)
+  in_common_data=pbmclapply(names_in_common,match.common,
+                            namegends,commonnames,mc.cores=cores)
+  namegends[names_in_common,]=do.call(rbind,in_common_data)
+  
   # Save this new dataset to be filled in as you go
   save(namegends,file="df6_namegends.RData")
 }

@@ -343,6 +343,15 @@ get.first.last=function(x){
   la=get.preferred(tail(x,1))
   return(c(fa,la))
 }
+match.common=function(x,namegends,commonnames){
+  this_name=namegends$name[x]
+  cn_index=which(commonnames$name==this_name)
+  if(length(cn_index)>0){
+    return(commonnames[cn_index,])
+  }else{
+    return(namegends[x,])
+  }
+}
 
 ## New functions for Step7_AssignGenders.R
 gend.to.auths=function(first_last_auths,namegends,threshold=0.7){
