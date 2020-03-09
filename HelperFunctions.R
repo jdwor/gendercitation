@@ -269,12 +269,12 @@ match.gend=function(name,namegends){
     return(0.5)
   }
 }
-match.variants.inner=function(name,allfirsts,alllasts,namegends){
+match.variants.inner=function(name,allfirsts,alllasts,nickname.gends){
   first=name[1]; last=name[2]
   samelast.full=unique(allfirsts[alllasts==last])
-  samelast.clean=unlist(lapply(subfirsts,get.preferred))
+  samelast.clean=unlist(lapply(samelast.full,get.preferred))
   samelast.initials=extract.initials(samelast.full)
-  samelast.gends=unlist(lapply(samelast.clean,match.gend,namegends))
+  samelast.gends=unlist(lapply(samelast.clean,match.gend,nickname.gends))
   
   name.index=which(samelast.full==first)
   
@@ -297,7 +297,7 @@ match.variants.inner=function(name,allfirsts,alllasts,namegends){
   matches=which((samelast.clean==this.clean | 
                    tolower(samelast.clean)%in%this.nicknames) & 
                 grepl(this.initials,samelast.initials) & 
-                  ngends==tngend)
+                  samelast.gends==this.gend)
   if(length(matches)==1){
     if(nchar(samelast.full[matches])>nchar(first)){
       return(samelast.full[matches])
@@ -319,14 +319,15 @@ match.variants.inner=function(name,allfirsts,alllasts,namegends){
   }
 }
 match.variants.outer=function(x,first_names,last_names,allfirsts,
-                              alllasts,may_have_variants){
+                              alllasts,may_have_variants,nickname.gends){
   sub_firsts=first_names[[x]]
   sub_lasts=last_names[[x]]
   sub_with_variants=which(sub_lasts%in%may_have_variants)
   if(length(sub_with_variants)>0){
     needed_names=cbind(sub_firsts[sub_with_variants],
                        sub_lasts[sub_with_variants])
-    matched_names=apply(needed_names,1,match.variants.inner,allfirsts,alllasts)
+    matched_names=apply(needed_names,1,match.variants.inner,allfirsts,
+                        alllasts,nickname.gends)
     sub_firsts[sub_with_variants]=unlist(matched_names)
   }
   return(sub_firsts)

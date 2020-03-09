@@ -56,7 +56,7 @@ may_have_variants=names(multiple_occurrences[may_have_variants==1])
 # NOTE: This function takes some power and some time (best on a cluster)
 fn_matched=pbmclapply(1:length(first_names),match.variants.outer,
                       first_names,last_names,allfirsts,alllasts,
-                      may_have_variants,mc.cores=cores)
+                      may_have_variants,nickname.gends,mc.cores=cores)
 allfirsts_matched=as.vector(unlist(fn_matched))
 
 # Test out whether it worked as expected by comparing variants before/after
