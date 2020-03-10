@@ -650,38 +650,81 @@ get.plotdf=function(boot){
                                 "Man &\nWoman","Woman &\nWoman"))
   return(plotdf)
 }
-get.plotdf.temp=function(boot){
+get.plotdf.temp=function(boot,unique.years){
   plotdf=data.frame(Group=rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
-                                "Woman &\nWoman"),each=10),Year=rep(2009:2018,4),
+                                "Woman &\nWoman"),each=length(unique.years)),
+                    Year=rep(unique.years,4),
                     Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
   plotdf$Group<-factor(plotdf$Group,
                        levels=c("Man &\nMan","Woman &\nMan",
                                 "Man &\nWoman","Woman &\nWoman"))
   return(plotdf)
 }
-get.plotdf.temp2=function(boot){
-  plotdf=data.frame(Year=rep(2009:2018,8),
-                    Type=c(rep("Observed",40),rep("Expected",40)),
-                    Group=rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
-                                "Woman &\nWoman"),each=10),
+get.plotdf.temp2=function(boot,unique.years){
+  plotdf=data.frame(Year=rep(unique.years,8),
+                    Type=c(rep("Observed",4*length(unique.years)),
+                           rep("Expected",4*length(unique.years))),
+                    Group=rep(rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
+                                "Woman &\nWoman"),each=length(unique.years)),2),
                     Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
   plotdf$Group<-factor(plotdf$Group,
                        levels=c("Man &\nMan","Woman &\nMan",
                                 "Man &\nWoman","Woman &\nWoman"))
-  
   plotdf=as.data.table(plotdf)
-  plotdf[Group=="Man &\nMan",y_min:=0.56]
-  plotdf[Group=="Man &\nMan",y_max:=0.66]
-  plotdf[Group=="Woman &\nMan",y_min:=0.20]
-  plotdf[Group=="Woman &\nMan",y_max:=0.27]
-  plotdf[Group=="Man &\nWoman",y_min:=0.077]
-  plotdf[Group=="Man &\nWoman",y_max:=0.103]
-  plotdf[Group=="Woman &\nWoman",y_min:=0.04]
-  plotdf[Group=="Woman &\nWoman",y_max:=0.08]
-  
+
   return(plotdf)
 }
-f2plot=function(data,title,yl=T,xl=T,all=F,shortlab=F){
+get.ylim=function(plotdf1,plotdf2,group,type){
+  if(type=="lower"){
+    return(0.975*min(c(plotdf1$Prop[plotdf1$Group==group]-
+                  plotdf1$SE[plotdf1$Group==group],
+                plotdf2$Prop[plotdf2$Group==group]-
+                  plotdf2$SE[plotdf2$Group==group])))
+  }else if(type=="upper"){
+    return(1.025*max(c(plotdf1$Prop[plotdf1$Group==group]-
+                         plotdf1$SE[plotdf1$Group==group],
+                       plotdf2$Prop[plotdf2$Group==group]-
+                         plotdf2$SE[plotdf2$Group==group])))
+  }else{stop("'type' must be either 'lower' or 'upper'")}
+}
+equate.plotdf.lims=function(plotdf1,plotdf2){
+  plotdf1[Group=="Man &\nMan",y_min:=get.ylim(plotdf1,plotdf2,
+                                             "Man &\nMan","lower")]
+  plotdf1[Group=="Man &\nMan",y_max:=get.ylim(plotdf1,plotdf2,
+                                             "Man &\nMan","upper")]
+  plotdf1[Group=="Woman &\nMan",y_min:=get.ylim(plotdf1,plotdf2,
+                                               "Woman &\nMan","lower")]
+  plotdf1[Group=="Woman &\nMan",y_max:=get.ylim(plotdf1,plotdf2,
+                                               "Woman &\nMan","upper")]
+  plotdf1[Group=="Man &\nWoman",y_min:=get.ylim(plotdf1,plotdf2,
+                                               "Man &\nWoman","lower")]
+  plotdf1[Group=="Man &\nWoman",y_max:=get.ylim(plotdf1,plotdf2,
+                                               "Man &\nWoman","upper")]
+  plotdf1[Group=="Woman &\nWoman",y_min:=get.ylim(plotdf1,plotdf2,
+                                                 "Woman &\nWoman","lower")]
+  plotdf1[Group=="Woman &\nWoman",y_max:=get.ylim(plotdf1,plotdf2,
+                                                 "Woman &\nWoman","upper")]
+  
+  plotdf2[Group=="Man &\nMan",y_min:=get.ylim(plotdf1,plotdf2,
+                                              "Man &\nMan","lower")]
+  plotdf2[Group=="Man &\nMan",y_max:=get.ylim(plotdf1,plotdf2,
+                                              "Man &\nMan","upper")]
+  plotdf2[Group=="Woman &\nMan",y_min:=get.ylim(plotdf1,plotdf2,
+                                                "Woman &\nMan","lower")]
+  plotdf2[Group=="Woman &\nMan",y_max:=get.ylim(plotdf1,plotdf2,
+                                                "Woman &\nMan","upper")]
+  plotdf2[Group=="Man &\nWoman",y_min:=get.ylim(plotdf1,plotdf2,
+                                                "Man &\nWoman","lower")]
+  plotdf2[Group=="Man &\nWoman",y_max:=get.ylim(plotdf1,plotdf2,
+                                                "Man &\nWoman","upper")]
+  plotdf2[Group=="Woman &\nWoman",y_min:=get.ylim(plotdf1,plotdf2,
+                                                  "Woman &\nWoman","lower")]
+  plotdf2[Group=="Woman &\nWoman",y_max:=get.ylim(plotdf1,plotdf2,
+                                                  "Woman &\nWoman","upper")]
+  
+  return(list(plotdf1,plotdf2))
+}
+f2plot=function(data,title,ymin,ymax,yl=T,xl=T,shortlab=F){
   p=ggplot(data,aes(x=Group, y=Prop, fill=Group))+
     geom_bar(stat="identity", color="black",position=position_dodge())+
     geom_errorbar(aes(ymin=(Prop-SE),
@@ -713,17 +756,14 @@ f2plot=function(data,title,yl=T,xl=T,all=F,shortlab=F){
   }else{
     p=p+ylab(NULL)
   }
-  if(all==T){
-    p=p+scale_y_continuous(breaks=seq(-.30,.30,.15),
-                           labels=c("-30%","-15%","0%","+15%","+30%"),
-                           limits=c(-.31,.31))
-  }else{
-    p=p+scale_y_continuous(breaks=seq(-.4,.4,.2),
-                           labels=c("-40%","-20%","0%","+20%","+40%"),
-                           limits=c(-.4,.4))
-  }
+  min.break=ceiling(ymin*10)/10
+  max.break=floor(ymax*10)/10
+  breaks=seq(min.break,max.break,(max.break-min.break)/4)
+  p=p+scale_y_continuous(breaks=breaks,
+                         limits=c(ymin,ymax))
+  return(p)
 }
-f4Aplot=function(data,title){
+f4Aplot=function(data,title,ymin,ymax){
   p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
     geom_line()+
     geom_point()+
@@ -737,10 +777,14 @@ f4Aplot=function(data,title){
                                 "Woman &\nMan"="darkslategray4",
                                 "Man &\nWoman"="lightcyan3",
                                 "Woman &\nWoman"="lightsalmon3"))+
-    ylab("Percent over/undercitation")+xlab("Year")+
-    scale_y_continuous(breaks=seq(-.4,.4,.2),
-                       labels=c("-40%","-20%","0%","+20%","+40%"),
-                       limits=c(-.4,.4))
+    ylab("Percent over/undercitation")+xlab("Year")
+  
+  min.break=ceiling(ymin*10)/10
+  max.break=floor(ymax*10)/10
+  breaks=seq(min.break,max.break,(max.break-min.break)/4)
+  p=p+scale_y_continuous(breaks=breaks,
+                         limits=c(ymin,ymax))
+
   return(p)
 }
 f4Bplot=function(data,title){

@@ -47,8 +47,10 @@ boot.cn=boot(ref_tot_sub,citegap,R=500,type='conditional')
 # Create ggplot compatible data frames
 plot.df.randomdraw=get.plotdf(boot.rd)
 plot.df.conditional=get.plotdf(boot.cn)
-p.all.rd=f2plot(plot.df.randomdraw,"Gap relative to literature")
-p.all.cn=f2plot(plot.df.conditional,"Gap conditional on characteristics")
+p.all.rd=f2plot(plot.df.randomdraw,"Gap relative to literature",
+                ymin=-0.35,ymax=0.35)
+p.all.cn=f2plot(plot.df.conditional,"Gap conditional on characteristics",
+                ymin=-0.35,ymax=0.35)
 
 # View plots
 p.all.rd
@@ -90,11 +92,11 @@ plot.df.worw=get.plotdf(boot.worw)
 plot.df.wm=get.plotdf(boot.wm)
 plot.df.mw=get.plotdf(boot.mw)
 plot.df.ww=get.plotdf(boot.ww)
-p.mm=f2plot(plot.df.mm,"Citing: MM")
-p.worw=f2plot(plot.df.worw,"Citing: W or W")
-p.wm=f2plot(plot.df.wm,"Citing: WM")
-p.mw=f2plot(plot.df.mw,"Citing: MW")
-p.ww=f2plot(plot.df.ww,"Citing: WW")
+p.mm=f2plot(plot.df.mm,"Citing: MM",ymin=-0.35,ymax=0.35)
+p.worw=f2plot(plot.df.worw,"Citing: W or W",ymin=-0.35,ymax=0.35)
+p.wm=f2plot(plot.df.wm,"Citing: WM",ymin=-0.35,ymax=0.35)
+p.mw=f2plot(plot.df.mw,"Citing: MW",ymin=-0.35,ymax=0.35)
+p.ww=f2plot(plot.df.ww,"Citing: WW",ymin=-0.35,ymax=0.35)
 
 # View plots
 p.mm
@@ -132,10 +134,11 @@ boot.worw.temp=boot(ref_tot_sub[gend2_sub=="W|W",],citegap.temp,
                     years=year_sub[gend2_sub=="W|W"],return="all",R=500)
 
 # Create ggplot compatible data frames
-plot.df.mm.temp=get.plotdf.temp(boot.mm.temp)
-plot.df.worw.temp=get.plotdf.temp(boot.worw.temp)
-p.mm.temp=f4Aplot(plot.df.mm.temp,"Citing: MM")
-p.worw.temp=f4Aplot(plot.df.worw.temp,"Citing: W or W")
+unique.years=sort(unique(year_sub))
+plot.df.mm.temp=get.plotdf.temp(boot.mm.temp,unique.years)
+plot.df.worw.temp=get.plotdf.temp(boot.worw.temp,unique.years)
+p.mm.temp=f4Aplot(plot.df.mm.temp,"Citing: MM",ymin=-0.4,ymax=0.4)
+p.worw.temp=f4Aplot(plot.df.worw.temp,"Citing: W or W",ymin=-0.4,ymax=0.4)
 
 # View plots
 p.mm.temp
@@ -152,10 +155,11 @@ boot.worw.temp2=boot(ref_tot_sub[gend2_sub=="W|W",],citegap.temp2,
                      years=year_sub[gend2_sub=="W|W"],R=500)
 
 # Create ggplot compatible data frames
-plot.df.mm.temp2=get.plotdf.temp2(boot.mm.temp2)
-plot.df.worw.temp2=get.plotdf.temp2(boot.worw.temp2)
-p.mm.temp2=f4Bplot(plot.df.mm.temp2,"Citing: MM")
-p.worw.temp2=f4Bplot(plot.df.worw.temp2,"Citing: W or W")
+plot.df.mm.temp2=get.plotdf.temp2(boot.mm.temp2,unique.years)
+plot.df.worw.temp2=get.plotdf.temp2(boot.worw.temp2,unique.years)
+equated.ylims=equate.plotdf.lims(plot.df.mm.temp2,plot.df.worw.temp2)
+p.mm.temp2=f4Bplot(equated.ylims[[1]],"Citing: MM")
+p.worw.temp2=f4Bplot(equated.ylims[[2]],"Citing: W or W")
 
 # View plots
 p.mm.temp2
@@ -188,8 +192,8 @@ boot.MMP=boot(mmp_over_sub,netgap.temp,groups=gend4_sub,
               cites=num_cited_sub,years=year_sub,R=500)
 
 # Create ggplot compatible data frames
-plot.df.MA=get.plotdf.temp(boot.MA)
-plot.df.MMP=get.plotdf.temp(boot.MMP)
+plot.df.MA=get.plotdf.temp(boot.MA,unique.years)
+plot.df.MMP=get.plotdf.temp(boot.MMP,unique.years)
 p.MA=f5plot(plot.df.MA,"Man author overrepresentation")
 p.MMP=f5plot(plot.df.MMP,"MM paper overrepresentation")
 
