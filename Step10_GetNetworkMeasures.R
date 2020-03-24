@@ -23,8 +23,8 @@ author_gends=unique(author_gends)
 # Find previous co-authors for each article in dataset
 # NOTE: This function takes some power and some time (best on a cluster)
 month_from_base=article.data$MB
-prev_coauths=pbmclapply(1:length(all_auth_names),get.prev.coauths,first_auths,
-                        last_auths,all_auth_names,month_from_base,mc.cores=cores)
+prev_coauths=pbmclapply(1:length(all_auth_names),get.prev.coauths,
+                        all_auth_names,month_from_base,mc.cores=cores)
 
 # Calculate local man-author overrepresentation in each article's network
 # NOTE: This function takes some power and some time (best on a cluster)

@@ -435,21 +435,22 @@ get.ref.props=function(x,article.data,uncond_expecs,cond_expecs){
 }
 
 ## New functions for Step10_GetNetworkMeasures.R
-get.prev.coauths=function(x,first_auths,last_auths,all_auth_names,month_from_base){
-  fa_name=first_auths[[x]]
-  la_name=last_auths[[x]]
+get.prev.coauths=function(x,all_auth_names,month_from_base){
+  this_auths=all_auth_names[[x]]
   this_month=month_from_base[x]
   
   auths_in=rep(FALSE,length(all_auth_names))
   sub_auth_names=all_auth_names[month_from_base<=this_month]
   auths_in_sub=sapply(seq_along(sub_auth_names),
-                      function(y){c(fa_name,la_name) %in% sub_auth_names[[y]]})
-  auths_in_sub=apply(auths_in_sub,2,sum)>0
+                      function(y){this_auths %in% sub_auth_names[[y]]})
+  if(!is.null(nrow(auths_in_sub))){
+    auths_in_sub=apply(auths_in_sub,2,sum)>0
+  }
   auths_in[month_from_base<=this_month]=auths_in_sub
   auths_in=which(auths_in)
   
   prev_coauths=unique(unlist(all_auth_names[auths_in]))
-  prev_coauths=prev_coauths[!(prev_coauths%in%c(fa_name,la_name))]
+  prev_coauths=prev_coauths[!(prev_coauths%in%this_auths)]
   return(prev_coauths)
 }
 get.ma.overrep=function(x,prev_coauths,all_auth_names,month_from_base,author_gends){
