@@ -17,6 +17,13 @@ for(i in journal_folders){
     this.data.frame=readFiles(paste0(i,"/",j))
     this.data.frame=convert2df(this.data.frame,
                                dbsource="wos",format="plaintext")
+    
+    # Select relevant variables
+    # AF=authors, SO=journal, DT=article type, CR=reference list
+    # TC=total citation, PD=month/day, PY=year, DI=DOI, PM=PubMedID
+    this.data.frame=this.data.frame %>% 
+      select(AF, SO, DT, CR, TC, PD, PY, DI, PM)
+    
     data.frame=rbind(data.frame,this.data.frame)
   }
   
@@ -42,12 +49,6 @@ for(i in journal_folders){
       Sys.sleep(2)
     }
   }
-  
-  # Select relevant variables
-  # AF=authors, SO=journal, DT=article type, CR=reference list
-  # TC=total citation, PD=month/day, PY=year, DI=DOI
-  data.frame=data.frame %>% 
-    select(AF, SO, DT, CR, TC, PD, PY, DI)
   
   # Translate month/day to numeric month
   data.frame$PD=unlist(lapply(1:nrow(data.frame),get.date,pd=data.frame$PD))
