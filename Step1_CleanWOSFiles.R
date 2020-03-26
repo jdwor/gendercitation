@@ -11,20 +11,17 @@ for(i in journal_folders){
   # For each journal, find all data files within folder
   files=list.files(i)
   
-  data.frame=NULL
   for(j in files){
     # For each file, read data in, convert to data frame, and concatenate
     this.data.frame=readFiles(paste0(i,"/",j))
     this.data.frame=convert2df(this.data.frame,
                                dbsource="wos",format="plaintext")
     
-    # Select relevant variables
-    # AF=authors, SO=journal, DT=article type, CR=reference list
-    # TC=total citation, PD=month/day, PY=year, DI=DOI, PM=PubMedID
-    this.data.frame=this.data.frame %>% 
-      select(AF, SO, DT, CR, TC, PD, PY, DI, PM)
-    
-    data.frame=rbind(data.frame,this.data.frame)
+    if(exists("data.frame",mode="list")){
+      data.frame=merge(data.frame,this.data.frame,all=T,sort=F)
+    }else{
+      data.frame=this.data.frame
+    }
   }
   
   # Find article entries that don't have DOI but do have PubMed ID
@@ -49,6 +46,12 @@ for(i in journal_folders){
       Sys.sleep(2)
     }
   }
+  
+  # Select relevant variables
+  # AF=authors, SO=journal, DT=article type, CR=reference list
+  # TC=total citation, PD=month/day, PY=year, DI=DOI
+  data.frame=data.frame %>% 
+    select(AF, SO, DT, CR, TC, PD, PY, DI)
   
   # Translate month/day to numeric month
   data.frame$PD=unlist(lapply(1:nrow(data.frame),get.date,pd=data.frame$PD))
