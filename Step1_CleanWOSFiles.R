@@ -32,14 +32,29 @@ for(i in journal_folders){
     # For articles with PubMed ID but no DOI
     for(j in without.DOI){
       
-      # Find relevant DOI from PMC website and enter into data frame
+      # Find relevant DOI from PMC id-translator website
       this.pubmed=data.frame$PM[j]
       turl=paste0("https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/?ids=",
                   this.pubmed)
-      xml=read_xml(turl,as_html=T)
+      xml=suppressWarnings(read_xml(turl,as_html=T))
       doi=xml %>% html_nodes("record") %>% html_attr("doi")
+      
+      # If PMC id-translator doesn't have it indexed...
+      if(is.na(doi)){
+        # Try using pubmed website directly
+        turl=paste0("https://pubmed.ncbi.nlm.nih.gov/",this.pubmed)
+        html=read_html(turl)
+        doi=html %>% html_nodes("meta[name='citation_doi']") %>%
+          html_attr("content")
+      }
+      
+      # If neither thing worked, just make it empty
+      doi=ifelse(!is.na(doi),doi,"")
+      
+      # If it's not empty, enter the new DOI into data.frame
       if(nchar(doi)>0){
         data.frame$DI[j]=doi
+        print(doi)
       }
       
       # Pause to space out pull requests
