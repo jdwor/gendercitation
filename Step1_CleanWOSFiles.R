@@ -14,8 +14,7 @@ for(i in journal_folders){
   for(j in files){
     # For each file, read data in, convert to data frame, and concatenate
     this.data.frame=readFiles(paste0(i,"/",j))
-    this.data.frame=convert2df(this.data.frame,
-                               dbsource="wos",format="plaintext")
+    this.data.frame=createdf(this.data.frame)
     
     if(exists("data.frame",mode="list")){
       data.frame=merge(data.frame,this.data.frame,all=T,sort=F)
@@ -71,7 +70,7 @@ for(i in journal_folders){
   # Translate month/day to numeric month
   data.frame$PD=unlist(lapply(1:nrow(data.frame),get.date,pd=data.frame$PD))
   data.frame$PD=as.numeric(data.frame$PD)
-  data.frame=data.frame[data.frame$PD%in%c(1:12),]
+  #data.frame=data.frame[data.frame$PD%in%c(1:12),]
   
   # Subset to only articles (i.e., remove editorial content etc.)
   data.frame=data.frame[data.frame$DT%in%c("Article","Review"),]

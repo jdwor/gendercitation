@@ -1,4 +1,105 @@
 ## New functions for Step1_CleanWOSFiles.R
+createdf.internal=function(D){
+  Papers = which(regexpr("PT ", D) == 1)
+  nP = length(Papers)
+  Tag = which(regexpr("  ", D) == -1)
+  lt = length(Tag)
+  st1 = seq(1, (lt - 1))
+  uniqueTag = unique(substr(D[Tag[st1]], 1, 2))
+  uniqueTag = uniqueTag[nchar(uniqueTag) == 2]
+  uniqueTag = uniqueTag[uniqueTag != "FN" & uniqueTag != "VR"]
+  DATA = data.frame(matrix(NA, nP, length(uniqueTag)))
+  names(DATA) = uniqueTag
+  specialSep = c("AU", "AF", "CR", "C1", "RP")
+  for (i in 1:nP) {
+    if (!is.null(shiny::getDefaultReactiveDomain())) {
+      shiny::incProgress(1/nP)
+    }
+    if (i%%100 == 0 | i == nP) 
+      cat("Articles extracted  ", i, "\n")
+    iStart = Papers[i]
+    if (i == nP) {
+      iStop = length(D)
+    }
+    else {
+      iStop = Papers[i + 1] - 1
+    }
+    Seq = seq(iStart, iStop)
+    pTag = iStart + which(regexpr("  ", D[Seq]) == 1) - 1
+    for (j in uniqueTag) {
+      if (j %in% specialSep) {
+        sep = ";"
+      }
+      else {
+        sep = " "
+      }
+      indTag = iStart + which(regexpr(j, D[Seq]) == 1) - 
+        1
+      if (length(indTag) > 0) {
+        it = 0
+        repeat {
+          if (sum(pTag > (indTag + it)) == 0) {
+            break
+          }
+          if (pTag[pTag > indTag + it][1] - (indTag + 
+                                             it) == 1) {
+            it = it + 1
+          }
+          else {
+            break
+          }
+        }
+        DATA[[j]][i] = paste(D[indTag:(indTag + it)], 
+                             collapse = sep)
+        DATA[[j]][i] = substr(DATA[[j]][i], 4, nchar(DATA[[j]][i]))
+      }
+      else {
+        DATA[[j]][i] = NA
+      }
+    }
+  }
+  DATA <- data.frame(lapply(DATA, function(x) {
+    x = gsub("\\s+", " ", x)
+  }), stringsAsFactors = FALSE)
+  DATA$UT = gsub("WOS:", "ISI", DATA$UT)
+  if ("PY" %in% names(DATA)) {
+    DATA$PY = as.numeric(DATA$PY)
+  }
+  DATA$DB = "ISI"
+  listAU = strsplit(DATA$AU, ";")
+  listAU = lapply(listAU, function(l) {
+    l = gsub(",", " ", l, fixed = TRUE)
+    l = gsub(".", "", l, fixed = TRUE)
+    l = gsub("\\s+", " ", l)
+    l = trim(l)
+    l = paste(l, collapse = ";")
+  })
+  DATA$AU = unlist(listAU)
+  if (names(DATA)[1] != "PT") {
+    DATA = DATA[, -(which(names(DATA) == "X.U.FEFF.F"))]
+  }
+  return(DATA)
+}
+createdf=function(file){
+  cat("\nConverting your wos collection into a bibliographic dataframe\n\n")
+  M <- createdf.internal(file)
+  if ("PY" %in% names(M)) {
+    M$PY = as.numeric(M$PY)
+  }else {
+    M$PY = NA
+  }
+  if ("TC" %in% names(M)) {
+    M$TC = as.numeric(M$TC)
+  }else {
+    M$TC = NA
+  }
+  if (!("CR" %in% names(M))) {
+    M$CR = "none"
+  }
+  M$AU = gsub(intToUtf8(8217), intToUtf8(39), M$AU)
+  cat("Done!\n\n")
+  return(M)
+}
 get.date=function(x,pd){
   pd=pd[x]
   pd=tolower(pd)
