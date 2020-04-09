@@ -908,7 +908,10 @@ f4Bplot=function(data,title){
           strip.text.x = element_blank())
   return(p)
 }
-f5plot=function(data,title){
+f5plot=function(data,title,ymin,ymax){
+  min.break=ceiling(ymin*10)/10
+  max.break=floor(ymax*10)/10
+  breaks=seq(min.break,max.break,(max.break-min.break)/4)
   p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
     geom_line()+
     geom_point()+
@@ -922,10 +925,41 @@ f5plot=function(data,title){
                                 "Woman &\nWoman"="steelblue3"),
                        name="Citing\nauthors")+
     ylab("Median overrepresentation")+xlab("Year")+
-    scale_y_continuous(breaks=seq(-.1,.1,.05),
-                       labels=c("-0.10","-0.05","0.00","0.05","0.10"),
-                       limits=c(-.1,.1))
+    scale_y_continuous(breaks=breaks,limits=c(ymin,ymax))
   return(p)
+}
+f6plot=function(data,title,type,ymin,ymax){
+  if(type=="A"){
+    p=ggplot(data[data$Type=="A",])+
+      geom_bar(aes(x=Group, y=Prop, fill=Group),
+               stat="identity",color="black",position=position_dodge())+
+      geom_errorbar(aes(x=Group,ymin=(Prop-SE),
+                        ymax=(Prop+SE)),width=.2)
+    
+  }else{
+    p=ggplot(data[data$Type=="B",])+
+      geom_bar(aes(x=Group, y=Prop, fill=Group),
+               stat="identity",color="black",position=position_dodge())+
+      geom_errorbar(aes(x=Group,ymin=(Prop-SE),
+                        ymax=(Prop+SE)),width=.2)+
+      geom_bar(aes(x=data$Group[data$Type=="A"],y=data$Prop[data$Type=="A"]), 
+               fill=NA,stat="identity",color="black",position=position_dodge(),
+               lty="longdash")
+  }
+  min.break=ceiling(ymin*10)/10
+  max.break=floor(ymax*10)/10
+  breaks=seq(min.break,max.break,(max.break-min.break)/4)
+  p+theme_bw()+theme(legend.position="n")+
+    ggtitle(title)+xlab("Cited authors")+
+    ylab("Percent over/undercitation")+
+    scale_fill_manual(values=c("Man &\nMan"="#FDBC53",
+                               "Woman &\nMan"="#798081",
+                               "Man &\nWoman"="#95D5B2",
+                               "Woman &\nWoman"="steelblue3"))+
+    ylab("Median MM overcitation")+xlab(NULL)+
+    scale_y_continuous(breaks=breaks,
+                       limits=c(ymin,ymax))+
+    geom_hline(yintercept=0,color='black',lty=1)
 }
 
 

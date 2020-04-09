@@ -92,11 +92,11 @@ plot.df.worw=get.plotdf(boot.worw)
 plot.df.wm=get.plotdf(boot.wm)
 plot.df.mw=get.plotdf(boot.mw)
 plot.df.ww=get.plotdf(boot.ww)
-p.mm=f2plot(plot.df.mm,"Citing: MM",ymin=-0.35,ymax=0.35)
-p.worw=f2plot(plot.df.worw,"Citing: W or W",ymin=-0.35,ymax=0.35)
-p.wm=f2plot(plot.df.wm,"Citing: WM",ymin=-0.35,ymax=0.35)
-p.mw=f2plot(plot.df.mw,"Citing: MW",ymin=-0.35,ymax=0.35)
-p.ww=f2plot(plot.df.ww,"Citing: WW",ymin=-0.35,ymax=0.35)
+p.mm=f2plot(plot.df.mm,"Citing: MM",ymin=-0.40,ymax=0.40)
+p.worw=f2plot(plot.df.worw,"Citing: W or W",ymin=-0.40,ymax=0.40)
+p.wm=f2plot(plot.df.wm,"Citing: WM",ymin=-0.40,ymax=0.40)
+p.mw=f2plot(plot.df.mw,"Citing: MW",ymin=-0.40,ymax=0.40)
+p.ww=f2plot(plot.df.ww,"Citing: WW",ymin=-0.40,ymax=0.40)
 
 # View plots
 p.mm
@@ -187,15 +187,16 @@ netgap(mmp_over_sub,groups=gend4_sub,cites=num_cited_sub,verbose=T)
 # Get bootstrap standard errors for overrep values - about 30 seconds each
 boot.MA=boot(ma_over_sub,netgap.temp,groups=gend4_sub,
              cites=num_cited_sub,years=year_sub,R=500)
-
 boot.MMP=boot(mmp_over_sub,netgap.temp,groups=gend4_sub,
               cites=num_cited_sub,years=year_sub,R=500)
 
 # Create ggplot compatible data frames
 plot.df.MA=get.plotdf.temp(boot.MA,unique.years)
 plot.df.MMP=get.plotdf.temp(boot.MMP,unique.years)
-p.MA=f5plot(plot.df.MA,"Man author overrepresentation")
-p.MMP=f5plot(plot.df.MMP,"MM paper overrepresentation")
+p.MA=f5plot(plot.df.MA,"Man author overrepresentation",
+            ymin=-0.10,ymax=0.10)
+p.MMP=f5plot(plot.df.MMP,"MM paper overrepresentation",
+             ymin=-0.10,ymax=0.10)
 
 # View plots
 p.MA
@@ -215,4 +216,25 @@ medover(mm_overcite_sub,groups=gend4_sub,cites=num_cited_sub,
 # Median MM overcitation after accounting for networks
 medover(mm_overcite_sub,groups=gend4_sub,cites=num_cited_sub,verbose=T,
         network=T,ma_overrep=ma_over_sub,mmp_overrep=mmp_over_sub)
+
+###################################
+## Recreate graphs from Figure 6 ##
+###################################
+
+# Get bootstrap standard errors for overcite values - about 30 seconds each
+boot.MO.nonet=boot(mm_overcite_sub,medover,groups=gend4_sub,
+                   cites=num_cited_sub,network=F,R=500)
+boot.MO.net=boot(mm_overcite_sub,medover,groups=gend4_sub,
+                 cites=num_cited_sub,network=T,ma_overrep=ma_over_sub,
+                 mmp_overrep=mmp_over_sub,R=500)
+
+# Create ggplot compatible data frames
+plot.df.MO=rbind(get.plotdf(boot.MO.nonet),get.plotdf(boot.MO.net))
+plot.df.MO$Type=c(rep("A",4),rep("B",4))
+p.MO.nonet=f6plot(plot.df.MO,"Unconditional MM overcitation",type="A")
+p.MO.net=f6plot(plot.df.MO,"MM overcitation | Network",type="B")
+
+# View plots
+p.MO.nonet
+p.MO.net
 
