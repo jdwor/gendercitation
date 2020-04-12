@@ -1,7 +1,7 @@
 setwd("path/to/project/folder") # Change to your project folder path
 source("HelperFunctions.R")
 library(pbmcapply);library(mgcv)
-library(textclean)
+library(textclean); library(stringr)
 
 # Load in article dataset from step 7
 load("df7_articledata_withgenders.RData")
