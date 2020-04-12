@@ -495,17 +495,25 @@ transform.cat=function(x){
                        ifelse(x=="WW",3,NA))))
 }
 get.uncond.exp=function(x,gender_cat,month_from_base){
-  if(x>min(month_from_base)){
-    citable_papers=gender_cat[month_from_base<x]
-    prop_tab=table(factor(citable_papers,lev=0:3))
-    expecs_uncond=prop_tab/sum(prop_tab)
-    return(expecs_uncond)
+  if(!is.na(x)){
+    if(x>min(month_from_base,na.rm=T)){
+      citable_papers=gender_cat[month_from_base<x]
+      prop_tab=table(factor(citable_papers,lev=0:3))
+      expecs_uncond=prop_tab/sum(prop_tab)
+      return(expecs_uncond)
+    }else{
+      return(rep(NA,4))
+    }
   }else{
     return(rep(NA,4))
   }
 }
 match.uncond.exp=function(x,uncond_expecs,unique_months){
-  return(uncond_expecs[[which(unique_months==x)]])
+  if(!is.na(x)){
+    return(uncond_expecs[[which(unique_months==x)]])
+  }else{
+    return(uncond_expecs[[which(is.na(unique_months))]])
+  }
 }
 
 ## New functions for Step9_GetReferenceMeasures.R
