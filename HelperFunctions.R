@@ -549,13 +549,18 @@ get.prev.coauths=function(x,all_auth_names,month_from_base){
   this_month=month_from_base[x]
   
   auths_in=rep(FALSE,length(all_auth_names))
-  sub_auth_names=all_auth_names[month_from_base<=this_month]
+  
+  earlier_than_this=month_from_base<=this_month
+  ett_nas=which(is.na(earlier_than_this))
+  earlier_than_this[ett_nas]=FALSE
+  
+  sub_auth_names=all_auth_names[earlier_than_this]
   auths_in_sub=sapply(seq_along(sub_auth_names),
                       function(y){this_auths %in% sub_auth_names[[y]]})
   if(!is.null(nrow(auths_in_sub))){
     auths_in_sub=apply(auths_in_sub,2,sum)>0
   }
-  auths_in[month_from_base<=this_month]=auths_in_sub
+  auths_in[earlier_than_this]=auths_in_sub
   auths_in=which(auths_in)
   
   prev_coauths=unique(unlist(all_auth_names[auths_in]))
@@ -571,7 +576,11 @@ get.ma.overrep=function(x,prev_coauths,all_auth_names,month_from_base,author_gen
   if(length(prev_coauth_gends)>0){
     pc_man_prop=sum(prev_coauth_gends=="M")/sum(prev_coauth_gends!="U")
     
-    whole_field=unique(unlist(all_auth_names[month_from_base<=this_month]))
+    earlier_than_this=month_from_base<=this_month
+    ett_nas=which(is.na(earlier_than_this))
+    earlier_than_this[ett_nas]=FALSE
+    
+    whole_field=unique(unlist(all_auth_names[earlier_than_this]))
     whole_field_gends=author_gends$gend[author_gends$name%in%whole_field]
     wf_man_prop=sum(whole_field_gends=="M")/sum(whole_field_gends!="U")
     
@@ -585,16 +594,20 @@ get.mmp.overrep=function(x,prev_coauths,all_auth_names,month_from_base,article_g
   
   prev_coauth=prev_coauths[[x]]
   
+  earlier_than_this=month_from_base<this_month
+  ett_nas=which(is.na(earlier_than_this))
+  earlier_than_this[ett_nas]=FALSE
+  
   pc_papers=rep(0,length(all_auth_names))
-  sub_auth_names=all_auth_names[month_from_base<this_month]
+  sub_auth_names=all_auth_names[earlier_than_this]
   
   pc_papers_sub=sapply(seq_along(sub_auth_names),
                        function(x){prev_coauth %in% sub_auth_names[[x]]})
   if(is.null(nrow(pc_papers_sub))){
-    pc_papers[month_from_base<this_month]=pc_papers_sub
+    pc_papers[earlier_than_this]=pc_papers_sub
     pc_papers=which(pc_papers>0)
   }else{
-    pc_papers[month_from_base<this_month]=apply(pc_papers_sub,2,sum)
+    pc_papers[earlier_than_this]=apply(pc_papers_sub,2,sum)
     pc_papers=which(pc_papers>0)
   }
   
