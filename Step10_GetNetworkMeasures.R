@@ -23,20 +23,23 @@ author_gends=unique(author_gends)
 # Find previous co-authors for each article in dataset
 # NOTE: This function takes some power and some time (best on a cluster)
 month_from_base=article.data$MB
+year=article.data$PY
 prev_coauths=pbmclapply(1:length(all_auth_names),get.prev.coauths,
-                        all_auth_names,month_from_base,mc.cores=cores)
+                        all_auth_names,month_from_base,year,mc.cores=cores)
 
 # Calculate local man-author overrepresentation in each article's network
 # NOTE: This function takes some power and some time (best on a cluster)
 ma_overrep=pbmclapply(1:length(all_auth_names),get.ma.overrep,prev_coauths,
-                      all_auth_names,month_from_base,author_gends,mc.cores=cores)
+                      all_auth_names,month_from_base,year,
+                      author_gends,mc.cores=cores)
 ma_overrep=unlist(ma_overrep)
 
 # Calculate local man/man-paper overrepresentation in each article's network
 # NOTE: This function takes some power and some time (best on a cluster)
 article_gends=article.data$AG
 mmp_overrep=pbmclapply(1:length(all_auth_names),get.mmp.overrep,prev_coauths,
-                       all_auth_names,month_from_base,article_gends,mc.cores=cores)
+                       all_auth_names,month_from_base,year,
+                       article_gends,mc.cores=cores)
 mmp_overrep=unlist(mmp_overrep)
 
 # Save article data, citation proportion data, and network data
