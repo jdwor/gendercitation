@@ -1,6 +1,6 @@
 setwd("path/to/project/folder") # Change to your project folder path
 source("HelperFunctions.R")
-library(ggplot2);library(mgcv)
+library(ggplot2);library(mgcv);library(patchwork)
 library(boot);library(pbmcapply)
 library(data.table);library(quantreg)
 
@@ -21,6 +21,29 @@ gend_group_4=unlist(lapply(article.data$AG,transform.cat.4))
 gend_group_4=factor(gend_group_4,lev=c("MM","WM","MW","WW","NA"))
 gend_group_2=unlist(lapply(article.data$AG,transform.cat.2))
 gend_group_2=factor(gend_group_2,lev=c("MM","W|W","NA"))
+
+###################################
+## Recreate graphs from Figure 1 ##
+###################################
+
+# Get overall authorship breakdown by year
+timedata=get.timedf(article.data)
+p.ov=f1plot(timedata,"Overall authorship by year")
+
+# Get journal-specific graphs
+td.jn=get.timedf(article.data,'JOURNAL OF NEUROSCIENCE')
+td.nn=get.timedf(article.data,'NATURE NEUROSCIENCE')
+td.ne=get.timedf(article.data,'NEURON')
+td.br=get.timedf(article.data,'BRAIN')
+td.ni=get.timedf(article.data,'NEUROIMAGE')
+p.jn=f1plot(td.jn,'Journal of Neuroscience',yl=F,xl=F)
+p.nn=f1plot(td.nn,'Nature Neuroscience',yl=F,xl=F)
+p.ne=f1plot(td.ne,'Neuron',yl=F,xl=F)
+p.br=f1plot(td.br,'Brain',yl=F,xl=F)
+p.ni=f1plot(td.ni,'NeuroImage',yl=F,xl=F)
+
+# View plots
+p.ov/(p.jn+p.nn+p.ne+p.br+p.ni)
 
 #########################################################
 ## Calculate citation gaps across cited author genders ##
@@ -231,8 +254,10 @@ boot.MO.net=boot(mm_overcite_sub,medover,groups=gend4_sub,
 # Create ggplot compatible data frames
 plot.df.MO=rbind(get.plotdf(boot.MO.nonet),get.plotdf(boot.MO.net))
 plot.df.MO$Type=c(rep("A",4),rep("B",4))
-p.MO.nonet=f6plot(plot.df.MO,"Unconditional MM overcitation",type="A")
-p.MO.net=f6plot(plot.df.MO,"MM overcitation | Network",type="B")
+p.MO.nonet=f6plot(plot.df.MO,"Unconditional MM overcitation",
+                  type="A",ymin=-0.10,ymax=0.10)
+p.MO.net=f6plot(plot.df.MO,"MM overcitation | Network",
+                type="B",ymin=-0.10,ymax=0.10)
 
 # View plots
 p.MO.nonet

@@ -10,13 +10,14 @@ journal_folders=c("journal1","journal2","journal3")
 for(i in journal_folders){
   # For each journal, find all data files within folder
   files=list.files(i)
+  data.frame=NULL
   
   for(j in files){
     # For each file, read data in, convert to data frame, and concatenate
     this.data.frame=readFiles(paste0(i,"/",j))
     this.data.frame=createdf(this.data.frame)
     
-    if(exists("data.frame",mode="list")){
+    if(!is.null(data.frame)){
       data.frame=merge(data.frame,this.data.frame,all=T,sort=F)
     }else{
       data.frame=this.data.frame

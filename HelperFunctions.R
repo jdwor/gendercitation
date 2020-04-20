@@ -631,7 +631,7 @@ get.mmp.overrep=function(x,prev_coauths,all_auth_names,
     pc_paper_gends=article_gends[pc_papers]
     pc_mm_prop=sum(pc_paper_gends=="MM")/sum(!grepl("U",pc_paper_gends))
     
-    all_paper_gends=article_gends[month_from_base<this_month]
+    all_paper_gends=article_gends[earlier_than_this]
     all_mm_prop=sum(all_paper_gends=="MM")/sum(!grepl("U",all_paper_gends))
     
     return(pc_mm_prop-all_mm_prop)
@@ -717,17 +717,25 @@ citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
     year.vals=matrix(0,nrow=length(unique.years),ncol=4)
     for(j in 1:length(unique.years)){
       tyear=unique.years[j]
-      year.vals[j,]=apply(citation.totals[years==tyear,1:4],2,sum)/
-        apply(citation.totals[years==tyear,9:12],2,sum)-1
+      if(sum(years==tyear)>1){
+        year.vals[j,]=apply(citation.totals[years==tyear,1:4],2,sum)/
+          apply(citation.totals[years==tyear,9:12],2,sum)-1
+      }else{
+        year.vals[j,]=NA
+      }
     }
     out=year.vals
   }else if(return=='mm'){
     year.vals=rep(0,length(unique.years))
     for(j in 1:length(unique.years)){
       tyear=unique.years[j]
-      year.vals[j]=(sum(citation.totals[years==tyear,1])-
-                      sum(citation.totals[years==tyear,9]))/
-        sum(apply(citation.totals[years==tyear,9:12],2,sum))
+      if(sum(years==tyear)>1){
+        year.vals[j]=(sum(citation.totals[years==tyear,1])-
+                        sum(citation.totals[years==tyear,9]))/
+          sum(apply(citation.totals[years==tyear,9:12],2,sum))
+      }else{
+        year.vals[j]=NA
+      }
     }
     out=summary(lm(year.vals~unique.years))$coefficients[2,1]
     out=round(out*100,6)
@@ -745,11 +753,15 @@ citegap.temp2=function(citation.totals,i=NULL,years){
   
   year.vals=matrix(0,nrow=length(unique.years),ncol=8)
   for(j in 1:length(unique.years)){
-    tyear=unique.years[j]
-    obs=apply(citation.totals[years==tyear,1:4],2,sum)
-    exp=apply(citation.totals[years==tyear,9:12],2,sum)
-    tot=sum(obs)
-    year.vals[j,]=c(obs/tot,exp/tot)
+    if(sum(years==tyear)>1){
+      tyear=unique.years[j]
+      obs=apply(citation.totals[years==tyear,1:4],2,sum)
+      exp=apply(citation.totals[years==tyear,9:12],2,sum)
+      tot=sum(obs)
+      year.vals[j,]=c(obs/tot,exp/tot)
+    }else{
+      year.vals[j,]=c(NA,NA)
+    }
   }
   out=year.vals
   
@@ -779,6 +791,42 @@ netgap.temp=function(network_measure,i=NULL,groups,cites,years){
   out=year.vals
   
   return(out)
+}
+get.timedf=function(article.data,journal=NULL){
+  if(is.null(journal)){
+    timedata=NULL
+    for(i in unique(article.data$PY)){
+      subgends=article.data$AG[article.data$PY==i & 
+                                 article.data$AG%in%c("MM","WM","MW","WW")]
+      timedata.i=data.frame(Year=rep(i,4),Gender=c("MM","WM","MW","WW"),
+                            Prop=c(mean(subgends=="MM"),
+                                   mean(subgends=="WM"),
+                                   mean(subgends=="MW"),
+                                   mean(subgends=="WW")),
+                            Color=c("darkslateblue","darkslategray4",
+                                    "lightcyan3","lightsalmon3"))
+      timedata=rbind(timedata,timedata.i)
+    }
+  }else{
+    timedata=NULL
+    if(!journal%in%article.data$SO){
+      stop("'journal' must be one entered in the same format as article.data$SO")
+    }
+    for(i in unique(article.data$PY)){
+      subgends=article.data$AG[article.data$PY==i & article.data$SO==journal &
+                                 article.data$AG%in%c("MM","WM","MW","WW")]
+      timedata.i=data.frame(Year=rep(i,4),Gender=c("MM","WM","MW","WW"),
+                            Prop=c(mean(subgends=="MM"),
+                                   mean(subgends=="WM"),
+                                   mean(subgends=="MW"),
+                                   mean(subgends=="WW")),
+                            Color=c("darkslateblue","darkslategray4",
+                                    "lightcyan3","lightsalmon3"))
+      timedata=rbind(timedata,timedata.i)
+    }
+  }
+  timedata$Color=as.character(timedata$Color)
+  return(timedata)
 }
 get.plotdf=function(boot){
   plotdf=data.frame(Group=c("Man &\nMan","Woman &\nMan",
@@ -862,6 +910,20 @@ equate.plotdf.lims=function(plotdf1,plotdf2){
                                                   "Woman &\nWoman","upper")]
   
   return(list(plotdf1,plotdf2))
+}
+f1plot=function(data,title,yl=T,xl=T){
+  p=ggplot(data,aes(x=Year, y=Prop, fill=Color)) + 
+    geom_area(alpha=0.9,size=.5,color="black")+theme_bw()+
+    scale_fill_identity()+
+    scale_x_continuous(limits=c(min(data$Year),max(data$Year)),
+                       expand=c(0,0))+
+    scale_y_continuous(limits=c(0,1),expand=c(0,0))+
+    ggtitle(title)
+  if(yl==T & xl==T){
+    p+xlab("Year")+ylab("Proportion")
+  }else{
+    p
+  }
 }
 f2plot=function(data,title,ymin,ymax,yl=T,xl=T,shortlab=F){
   p=ggplot(data,aes(x=Group, y=Prop, fill=Group))+
