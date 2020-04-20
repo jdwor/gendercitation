@@ -31,19 +31,16 @@ timedata=get.timedf(article.data)
 p.ov=f1plot(timedata,"Overall authorship by year")
 
 # Get journal-specific graphs
-td.jn=get.timedf(article.data,'JOURNAL OF NEUROSCIENCE')
-td.nn=get.timedf(article.data,'NATURE NEUROSCIENCE')
-td.ne=get.timedf(article.data,'NEURON')
-td.br=get.timedf(article.data,'BRAIN')
-td.ni=get.timedf(article.data,'NEUROIMAGE')
-p.jn=f1plot(td.jn,'Journal of Neuroscience',yl=F,xl=F)
-p.nn=f1plot(td.nn,'Nature Neuroscience',yl=F,xl=F)
-p.ne=f1plot(td.ne,'Neuron',yl=F,xl=F)
-p.br=f1plot(td.br,'Brain',yl=F,xl=F)
-p.ni=f1plot(td.ni,'NeuroImage',yl=F,xl=F)
+# Change functions to the journal names in your data
+td.1=get.timedf(article.data,'JOURNAL 1')
+td.2=get.timedf(article.data,'JOURNAL 2')
+# ...
+p.1=f1plot(td.1,'Journal 1',yl=F,xl=F)
+p.2=f1plot(td.2,'Journal 2',yl=F,xl=F)
+# ...
 
 # View plots
-p.ov/(p.jn+p.nn+p.ne+p.br+p.ni)
+p.ov/(p.1+p.2)
 
 #########################################################
 ## Calculate citation gaps across cited author genders ##
