@@ -155,11 +155,29 @@ is.initials=function(x){
   return(identical(x,toupper(x)))
 }
 get.cr.sep=function(x){
-  name=paste0(x$family,", ",x$given)
-  return(name)
+  if(!is.null(x$given)){
+    name=paste0(x$family,", ",x$given)
+    return(name)
+  }else if(is.null(x$given) & grepl(" ",x$family)){
+    sep=strsplit(x$family," ")[[1]]
+    last=tail(sep,1)
+    first=paste(head(sep,length(sep)-1),collapse=" ")
+    name=paste0(last,", ",first)
+    return(name)
+  }else{
+    name=paste0(x$family,", ")
+    return(name)
+  }
 }
 get.cr.first=function(x){
-  return(x$given)
+  if(!is.null(x$given)){
+    return(x$given)
+  }else if(is.null(x$given) & grepl(" ",x$family)){
+    sep=strsplit(x$family," ")[[1]]
+    return(sep[1])
+  }else{
+    return("")
+  }
 }
 get.cr.auths=function(json_author){
   firsts=unlist(lapply(json_author,get.cr.first))

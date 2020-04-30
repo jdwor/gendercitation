@@ -21,7 +21,7 @@ first_names=pbmclapply(1:length(all_auth_names),get.all.given,
 initials=unlist(lapply(first_names,is.initials))
 
 # Determine which articles only have initial information
-needed_dois=df$DI[initials==T]
+needed_dois=data.frame$DI[initials==T]
 needed_names=all_auth_names[initials==T]
 
 # Prep urls for crossref pull requests
