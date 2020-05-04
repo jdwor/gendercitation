@@ -179,7 +179,12 @@ get.cr.first=function(x){
     return("")
   }
 }
+get.no.name=function(x){
+  return(is.null(x$family) & is.null(x$given))
+}
 get.cr.auths=function(json_author){
+  no.name=unlist(lapply(json_author,get.no.name))
+  json_author=json_author[!no.name]
   firsts=unlist(lapply(json_author,get.cr.first))
   Encoding(firsts)="latin1"
   firsts=replace_non_ascii(firsts)
