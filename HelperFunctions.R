@@ -674,9 +674,13 @@ transform.cat.2=function(x){
 citegap=function(ref_proportions,i=NULL,type='conditional'){
   if(is.null(i)){i=1:nrow(ref_proportions)}
   if(type=='conditional'){
+    nas=apply(is.na(ref_proportions[i,c(1:4,9:12)]),1,sum)!=0
+    i=i[!nas]
     out=apply(ref_proportions[i,1:4],2,sum)/
       apply(ref_proportions[i,9:12],2,sum)-1
   }else if(type=='randomdraw'){
+    nas=apply(is.na(ref_proportions[i,c(1:4,5:8)]),1,sum)!=0
+    i=i[!nas]
     out=apply(ref_proportions[i,1:4],2,sum)/
       apply(ref_proportions[i,5:8],2,sum)-1
   }else{
@@ -733,6 +737,8 @@ medover=function(mm_overcite,i=NULL,groups,cites,verbose=F,
 }
 citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
   if(is.null(i)){i=1:nrow(citation.totals)}
+  nas=apply(is.na(citation.totals[i,c(1:4,9:12)]),1,sum)!=0
+  i=i[!nas]
   unique.years=sort(unique(years),decreasing=F)
   years=years[i]
   citation.totals=citation.totals[i,]
@@ -770,14 +776,16 @@ citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
 }
 citegap.temp2=function(citation.totals,i=NULL,years){
   if(is.null(i)){i=1:nrow(citation.totals)}
+  nas=apply(is.na(citation.totals[i,c(1:4,9:12)]),1,sum)!=0
+  i=i[!nas]
   unique.years=sort(unique(years),decreasing=F)
   years=years[i]
   citation.totals=citation.totals[i,]
   
   year.vals=matrix(0,nrow=length(unique.years),ncol=8)
   for(j in 1:length(unique.years)){
+    tyear=unique.years[j]
     if(sum(years==tyear)>1){
-      tyear=unique.years[j]
       obs=apply(citation.totals[years==tyear,1:4],2,sum)
       exp=apply(citation.totals[years==tyear,9:12],2,sum)
       tot=sum(obs)
@@ -854,7 +862,9 @@ get.timedf=function(article.data,journal=NULL){
 get.plotdf=function(boot){
   plotdf=data.frame(Group=c("Man &\nMan","Woman &\nMan",
                             "Man &\nWoman","Woman &\nWoman"),
-                    Prop=boot$t0,SE=apply(boot$t,2,sd))
+                    Prop=boot$t0,
+                    LB=apply(boot$t,2,quantile,.025),
+                    UB=apply(boot$t,2,quantile,.975))
   plotdf$Group<-factor(plotdf$Group,
                        levels=c("Man &\nMan","Woman &\nMan",
                                 "Man &\nWoman","Woman &\nWoman"))
@@ -864,7 +874,9 @@ get.plotdf.temp=function(boot,unique.years){
   plotdf=data.frame(Group=rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
                                 "Woman &\nWoman"),each=length(unique.years)),
                     Year=rep(unique.years,4),
-                    Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
+                    Prop=as.vector(boot$t0),
+                    LB=apply(boot$t,2,quantile,.025),
+                    UB=apply(boot$t,2,quantile,.975))
   plotdf$Group<-factor(plotdf$Group,
                        levels=c("Man &\nMan","Woman &\nMan",
                                 "Man &\nWoman","Woman &\nWoman"))
@@ -876,7 +888,9 @@ get.plotdf.temp2=function(boot,unique.years){
                            rep("Expected",4*length(unique.years))),
                     Group=rep(rep(c("Man &\nMan","Woman &\nMan","Man &\nWoman",
                                 "Woman &\nWoman"),each=length(unique.years)),2),
-                    Prop=as.vector(boot$t0),SE=apply(boot$t,2,sd))
+                    Prop=as.vector(boot$t0),
+                    LB=apply(boot$t,2,quantile,.025),
+                    UB=apply(boot$t,2,quantile,.975))
   plotdf$Group<-factor(plotdf$Group,
                        levels=c("Man &\nMan","Woman &\nMan",
                                 "Man &\nWoman","Woman &\nWoman"))
@@ -886,15 +900,11 @@ get.plotdf.temp2=function(boot,unique.years){
 }
 get.ylim=function(plotdf1,plotdf2,group,type){
   if(type=="lower"){
-    return(0.975*min(c(plotdf1$Prop[plotdf1$Group==group]-
-                  plotdf1$SE[plotdf1$Group==group],
-                plotdf2$Prop[plotdf2$Group==group]-
-                  plotdf2$SE[plotdf2$Group==group])))
+    return(0.975*min(c(plotdf1$LB[plotdf1$Group==group],
+                plotdf2$LB[plotdf2$Group==group])))
   }else if(type=="upper"){
-    return(1.025*max(c(plotdf1$Prop[plotdf1$Group==group]-
-                         plotdf1$SE[plotdf1$Group==group],
-                       plotdf2$Prop[plotdf2$Group==group]-
-                         plotdf2$SE[plotdf2$Group==group])))
+    return(1.025*max(c(plotdf1$UB[plotdf1$Group==group],
+                       plotdf2$UB[plotdf2$Group==group])))
   }else{stop("'type' must be either 'lower' or 'upper'")}
 }
 equate.plotdf.lims=function(plotdf1,plotdf2){
@@ -951,8 +961,7 @@ f1plot=function(data,title,yl=T,xl=T){
 f2plot=function(data,title,ymin,ymax,yl=T,xl=T,shortlab=F){
   p=ggplot(data,aes(x=Group, y=Prop, fill=Group))+
     geom_bar(stat="identity", color="black",position=position_dodge())+
-    geom_errorbar(aes(ymin=(Prop-SE),
-                      ymax=(Prop+SE)),width=.2)+
+    geom_errorbar(aes(ymin=LB,ymax=UB),width=.2)+
     theme_bw()+theme(legend.position="n")+
     geom_hline(yintercept=0,color='black',lty=1)+
     ggtitle(title)
@@ -991,8 +1000,7 @@ f4Aplot=function(data,title,ymin,ymax){
   p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
     geom_line()+
     geom_point()+
-    geom_errorbar(aes(ymin=(Prop-SE),
-                      ymax=(Prop+SE)),width=.2)+
+    geom_errorbar(aes(ymin=LB,ymax=UB),width=.2)+
     theme_bw()+theme(legend.position="n")+
     #ylab("Citation gap (obs % / exp %)")+
     ggtitle(title)+geom_hline(yintercept=0,color='black',lty=2)+
@@ -1014,7 +1022,7 @@ f4Aplot=function(data,title,ymin,ymax){
 f4Bplot=function(data,title){
   p=ggplot(data,aes(x=Year, y=Prop, color=Group, lty=Type))+
     geom_line()+geom_point()+
-    geom_errorbar(aes(ymin=(Prop-SE),ymax=(Prop+SE)),width=.2)+
+    geom_errorbar(aes(ymin=LB,ymax=UB),width=.2)+
     facet_wrap(~Group, scales="free", nrow=2)+
     geom_blank(aes(y = data$y_min))+
     geom_blank(aes(y = data$y_max))+
@@ -1037,8 +1045,7 @@ f5plot=function(data,title,ymin,ymax){
   p=ggplot(data,aes(x=Year, y=Prop, color=Group))+
     geom_line()+
     geom_point()+
-    geom_errorbar(aes(ymin=(Prop-SE),
-                      ymax=(Prop+SE)),width=.2)+
+    geom_errorbar(aes(ymin=LB,ymax=UB),width=.2)+
     theme_bw()+theme(legend.position="bottom")+
     ggtitle(title)+geom_hline(yintercept=0,color='black',lty=2)+
     scale_color_manual(values=c("Man &\nMan"="#FDBC53",
@@ -1055,15 +1062,13 @@ f6plot=function(data,title,type,ymin,ymax){
     p=ggplot(data[data$Type=="A",])+
       geom_bar(aes(x=Group, y=Prop, fill=Group),
                stat="identity",color="black",position=position_dodge())+
-      geom_errorbar(aes(x=Group,ymin=(Prop-SE),
-                        ymax=(Prop+SE)),width=.2)
+      geom_errorbar(aes(x=Group,ymin=LB,ymax=UB),width=.2)
     
   }else{
     p=ggplot(data[data$Type=="B",])+
       geom_bar(aes(x=Group, y=Prop, fill=Group),
                stat="identity",color="black",position=position_dodge())+
-      geom_errorbar(aes(x=Group,ymin=(Prop-SE),
-                        ymax=(Prop+SE)),width=.2)+
+      geom_errorbar(aes(x=Group,ymin=LB,ymax=UB),width=.2)+
       geom_bar(aes(x=data$Group[data$Type=="A"],y=data$Prop[data$Type=="A"]), 
                fill=NA,stat="identity",color="black",position=position_dodge(),
                lty="longdash")
