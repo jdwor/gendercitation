@@ -671,15 +671,37 @@ transform.cat.2=function(x){
   ifelse(x=="MM",x,
          ifelse(x%in%c("WM","MW","WW"),"W|W","NA"))
 }
+citeprops=function(ref_proportions,i=NULL,type='conditional'){
+  if(is.null(i)){i=1:nrow(ref_proportions)}
+  if(type=='conditional'){
+    nas=apply(is.na(ref_proportions[i,c(1:12)]),1,sum)!=0
+    i=i[!nas]
+    out=round(matrix(apply(ref_tot_sub[i,c(1:4,9:12)],2,sum)/
+                       sum(apply(ref_tot_sub[i,1:4],2,sum)),
+                     byrow=T,ncol=4),3)
+    rownames(out)=c("Observed props.","Expected props.")
+  }else if(type=='randomdraw'){
+    nas=apply(is.na(ref_proportions[i,c(1:12)]),1,sum)!=0
+    i=i[!nas]
+    out=round(matrix(apply(ref_tot_sub[i,c(1:4,5:8)],2,sum)/
+                       sum(apply(ref_tot_sub[i,1:4],2,sum)),
+                     byrow=T,ncol=4),3)
+    rownames(out)=c("Observed props.","Expected props.")
+  }else{
+    stop("'type' must be either 'conditional' or 'randomdraw'")
+  }
+  colnames(out)=c("MM","WM","MW","WW")
+  return(out)
+}
 citegap=function(ref_proportions,i=NULL,type='conditional'){
   if(is.null(i)){i=1:nrow(ref_proportions)}
   if(type=='conditional'){
-    nas=apply(is.na(ref_proportions[i,c(1:4,9:12)]),1,sum)!=0
+    nas=apply(is.na(ref_proportions[i,c(1:12)]),1,sum)!=0
     i=i[!nas]
     out=apply(ref_proportions[i,1:4],2,sum)/
       apply(ref_proportions[i,9:12],2,sum)-1
   }else if(type=='randomdraw'){
-    nas=apply(is.na(ref_proportions[i,c(1:4,5:8)]),1,sum)!=0
+    nas=apply(is.na(ref_proportions[i,c(1:12)]),1,sum)!=0
     i=i[!nas]
     out=apply(ref_proportions[i,1:4],2,sum)/
       apply(ref_proportions[i,5:8],2,sum)-1
@@ -737,7 +759,7 @@ medover=function(mm_overcite,i=NULL,groups,cites,verbose=F,
 }
 citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
   if(is.null(i)){i=1:nrow(citation.totals)}
-  nas=apply(is.na(citation.totals[i,c(1:4,9:12)]),1,sum)!=0
+  nas=apply(is.na(citation.totals[i,c(1:12)]),1,sum)!=0
   i=i[!nas]
   unique.years=sort(unique(years),decreasing=F)
   years=years[i]
@@ -776,7 +798,7 @@ citegap.temp=function(citation.totals,i=NULL,years,return='mm'){
 }
 citegap.temp2=function(citation.totals,i=NULL,years){
   if(is.null(i)){i=1:nrow(citation.totals)}
-  nas=apply(is.na(citation.totals[i,c(1:4,9:12)]),1,sum)!=0
+  nas=apply(is.na(citation.totals[i,c(1:12)]),1,sum)!=0
   i=i[!nas]
   unique.years=sort(unique(years),decreasing=F)
   years=years[i]

@@ -12,7 +12,7 @@ cores=detectCores()
 
 ## Find subset of articles for analysis
 ## I.e., articles in a specific window that contain at least one relevant reference
-time_window=article.data$PY%in%c(2009:2018)
+time_window=article.data$PY%in%c(2009:2019)
 has_citations=ref_proportions[,13]>0
 subset_articles=time_window & has_citations
 
@@ -51,9 +51,11 @@ ref_prop_sub=ref_proportions[subset_articles,]
 ref_tot_sub=ref_prop_sub[,1:12]*ref_prop_sub[,13]
 
 # Gap relative to overall literature
+citeprops(ref_tot_sub,type='randomdraw')
 citegap(ref_tot_sub,type='randomdraw')
 
 # Gap conditional on papers' characteristics
+citeprops(ref_tot_sub,type='conditional')
 citegap(ref_tot_sub,type='conditional')
 
 ###################################
