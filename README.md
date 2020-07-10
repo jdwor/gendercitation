@@ -2,7 +2,7 @@
 The `gendercitation` repository is a collection of R files for carrying
 out analyses of gender balance in reference lists. The files carry out
 the procedure described in [“The extent and drivers of gender imbalance
-in neuroscience reference lists”](https://arxiv.org/abs/2001.01002), by
+in neuroscience reference lists”](https://www.nature.com/articles/s41593-020-0658-y), by
 Dworkin, Linn, Teich, Zurn, Shinohara, and Bassett.
 
 The files are designed to analyze data drawn from the Web of Science
