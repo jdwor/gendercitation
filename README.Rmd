@@ -8,4 +8,4 @@ The files are designed to analyze data drawn from the Web of Science database. T
 
 After downloading data, the R files can be applied beginning with "Step1_CleanWOSFiles.R". This code is not fully automated, so files should be run interactively, and code should be edited when necessary (I have attempted to point out likely instances within the text).
 
-The code is currently in progress, and will be updated as new steps become available. Feel free to reach out to jdwor[at]pennmedicine[dot]upenn[dot]edu or jordandworkin[at]gmail[dot]com if you have any questions about the code.
+The code is currently in progress, and will be updated as new steps become available. Feel free to reach out to jordan.dworkin[at]nyspi[dot]columbia[dot]edu or jordandworkin[at]gmail[dot]com if you have any questions about the code.
