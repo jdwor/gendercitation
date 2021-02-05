@@ -328,61 +328,62 @@ extract.initials=function(name){
   name=gsub("[:a-z:]","",name)
   return(name)
 }
-match.initials=function(x,first_names,last_names,allfirsts,alllasts){
-  authors=first_names[[x]]
-  need=which(toupper(authors)==authors)
-  if(length(need)==0){
-    return(authors)
+match.initials=function(x,allfirsts,alllasts,initials){
+  if(initials[x]==F){
+    return(target.first)
   }else{
-    for(i in need){
-      target.first=authors[i]
-      target.initials=extract.initials(target.first)
-      target.last=last_names[[x]][i]
-      others=which(tolower(target.last)==tolower(alllasts))
-      if(length(others)>1){
-        allsimilar.full=NULL
-        allsimilar.concat=NULL
-        allsimilar.clean=NULL
-        for(j in others){
-          samelast.full=allfirsts[j]
-          samelast.concat=tolower(gsub("[[:punct:][:blank:]]","",samelast.full))
-          samelast.clean=get.preferred(samelast.full)
-          samelast.initials=extract.initials(samelast.full)
-          if(samelast.full!=toupper(samelast.full) & 
-             (samelast.initials==target.initials)){
-            allsimilar.full=c(allsimilar.full,samelast.full)
-            allsimilar.concat=c(allsimilar.concat,samelast.concat)
-            allsimilar.clean=c(allsimilar.clean,samelast.clean)
-          }
-        }
-        unique.clean=unique(allsimilar.clean)
-        name.lengths=nchar(unique.clean)
-        longest=unique.clean[which.max(name.lengths)]
-        others=unique.clean[-which.max(name.lengths)]
-        contained=unlist(lapply(others,grepl,longest))
-        if(length(unique(allsimilar.concat))==1 |
-           length(unique(allsimilar.clean))==1){
-          matched.name=sort(table(allsimilar.full),decreasing=T)
-          matched.name=names(matched.name)[1]
-          authors[i]=matched.name
-        }else if(length(contained)>0 & 
-                 sum(contained)==length(contained)){
-          matched.name=sort(table(allsimilar.full),decreasing=T)
-          matched.name=names(matched.name)[1]
-          authors[i]=matched.name
+    target.first=allfirsts[x]
+    target.initials=extract.initials(target.first)
+    target.last=alllasts[x]
+    others=which(tolower(target.last)==tolower(alllasts) & 
+                   initials==F)
+    if(length(others)>0){
+      allsimilar.full=NULL
+      allsimilar.concat=NULL
+      allsimilar.clean=NULL
+      for(j in others){
+        samelast.full=allfirsts[j]
+        samelast.concat=tolower(gsub("[[:punct:][:blank:]]","",samelast.full))
+        samelast.clean=get.preferred(samelast.full)
+        samelast.initials=extract.initials(samelast.full)
+        if(samelast.full!=toupper(samelast.full) & 
+           (samelast.initials==target.initials)){
+          allsimilar.full=c(allsimilar.full,samelast.full)
+          allsimilar.concat=c(allsimilar.concat,samelast.concat)
+          allsimilar.clean=c(allsimilar.clean,samelast.clean)
         }
       }
+      unique.clean=unique(allsimilar.clean)
+      name.lengths=nchar(unique.clean)
+      longest=unique.clean[which.max(name.lengths)]
+      others=unique.clean[-which.max(name.lengths)]
+      contained=unlist(lapply(others,grepl,longest))
+      if(length(unique(allsimilar.concat))==1 |
+         length(unique(allsimilar.clean))==1){
+        matched.name=sort(table(allsimilar.full),decreasing=T)
+        matched.name=names(matched.name)[1]
+        return(matched.name)
+      }else if(length(contained)>0 & 
+               sum(contained)==length(contained)){
+        matched.name=sort(table(allsimilar.full),decreasing=T)
+        matched.name=names(matched.name)[1]
+        return(matched.name)
+      }else{
+        return(target.first)
+      }
+    }else{
+      return(target.first)
     }
-    return(authors)
   }
 }
 find.variants=function(lastname,allfirsts,alllasts){
   samelasts=unique(allfirsts[alllasts==lastname])
   same.initials=substr(samelasts,1,1)
-  if(max(table(same.initials))>1){
-    return(1)
+  tab=table(same.initials)
+  if(max(tab)>1){
+    return(c(T,lastname,paste(names(tab[tab>1]),collapse=", ")))
   }else{
-    return(0)
+    return(c(F,lastname,""))
   }
 }
 match.gend=function(name,namegends){
@@ -442,19 +443,19 @@ match.variants.inner=function(name,allfirsts,alllasts,nickname.gends){
     return(first)
   }
 }
-match.variants.outer=function(x,first_names,last_names,allfirsts,
-                              alllasts,may_have_variants,nickname.gends){
-  sub_firsts=first_names[[x]]
-  sub_lasts=last_names[[x]]
-  sub_with_variants=which(sub_lasts%in%may_have_variants)
-  if(length(sub_with_variants)>0){
-    needed_names=cbind(sub_firsts[sub_with_variants],
-                       sub_lasts[sub_with_variants])
-    matched_names=apply(needed_names,1,match.variants.inner,allfirsts,
-                        alllasts,nickname.gends)
-    sub_firsts[sub_with_variants]=unlist(matched_names)
+match.variants.outer=function(x,allfirsts,alllasts,may_have_variants,
+                              nickname.gends){
+  first=allfirsts[x]
+  last=alllasts[x]
+  has_variants=sum(may_have_variants[,2]==last & 
+                     grepl(substr(first,1,1),may_have_variants[,3]))
+  if(has_variants>0){
+    matched_name=match.variants.inner(c(first,last),allfirsts,
+                                      alllasts,nickname.gends)
+  }else{
+    matched_name=first
   }
-  return(sub_firsts)
+  return(matched_name)
 }
 paste.first.last=function(x,first_names,last_names){
   fn=first_names[[x]]
