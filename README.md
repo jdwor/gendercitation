@@ -18,6 +18,6 @@ have attempted to point out likely instances within the text).
 
 The code is currently in progress, and will be updated as new steps
 become available. Feel free to reach out to
-jdwor\[at\]pennmedicine\[dot\]upenn\[dot\]edu or
+jordan.dworkin\[at\]nyspi\[dot\]columbia\[dot\]edu or
 jordandworkin\[at\]gmail\[dot\]com if you have any questions about the
 code.
