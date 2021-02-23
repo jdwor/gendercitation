@@ -133,6 +133,86 @@ get.date=function(x,pd){
   return(pd)
 }
 
+## New functions for Step1.5_GetAffiliationInfo.R
+innerSplit=function(split){
+  strsplit(split,c(" |\\,"))[[1]]
+}
+fixCountries=function(finals){
+  finals[nchar(finals)==2]="usa"
+  finals[suppressWarnings(!is.na(as.numeric(finals)))]="usa"
+  finals[finals=="kong"]="hong kong"
+  finals[finals=="zealand"]="new zealand"
+  finals[finals=="republic"]="czech republic"
+  finals[finals=="arabia"]="saudi arabia"
+  finals[finals=="caledonia"]="new caledonia"
+  finals[finals=="lanka"]="sri lanka"
+  finals[finals=="rica"]="costa rica"
+  finals[finals=="salvador"]="el salvador"
+  finals[finals=="herceg"]="bosnia and herzegovina"
+  finals[finals=="monteneg"]="montenegro"
+  finals[finals=="nevi"]="st kitts & nevis"
+  finals[finals=="nevis"]="st kitts & nevis"
+  return(finals)
+}
+getCountries=function(x,affil.data,fas,las){
+  t.corresp=affil.data$RP[x]
+  if(!is.na(t.corresp)){
+    fin.corr=tail(innerSplit(t.corresp),1)
+    fin.corr=fixCountries(fin.corr)
+  }else{
+    fin.corr=NA
+  }
+  
+  t.affil=affil.data$C1[x]
+  fa=fas[x]
+  la=las[x]
+  
+  if(is.na(t.affil)){
+    split1=NULL
+  }else if(grepl("\\[",t.affil)){
+    split1=strsplit(t.affil,"; \\[")[[1]]
+  }else{
+    split1=strsplit(t.affil,"; ")[[1]]
+  }
+  if(length(split1)>0){
+    split2=lapply(split1,innerSplit)
+    finals=unlist(lapply(split2,tail,1))
+    finals=fixCountries(finals)
+    
+    if(length(unique(finals))==1){
+      only=unique(finals)
+      return(c(fin.corr,only,only,only,only))
+    }else{
+      fa.ind=which(grepl(paste0(fa,", "),split1))
+      fa.affils=ifelse(length(fa.ind)>0,
+                       paste(unique(finals[fa.ind]),
+                             collapse=", "),NA)
+      la.ind=which(grepl(paste0(la,", "),split1))
+      la.affils=ifelse(length(la.ind)>0,
+                       paste(unique(finals[la.ind]),
+                             collapse=", "),NA)
+      all=paste(unique(finals),collapse=", ")
+      first=finals[1]
+      return(c(fin.corr,fa.affils,la.affils,all,first))
+    }
+  }else{
+    return(c(fin.corr,NA,NA,NA,NA))
+  }
+}
+getContinents=function(x,countries,country.to.cont){
+  cdat=as.character(countries[x,])
+  conts=rep(NA,length(cdat))
+  for(i in 1:length(cdat)){
+    if(!is.na(cdat[i])){
+      tc=strsplit(cdat[i],", ")[[1]]
+      wc=which(country.to.cont[,1]%in%tc)
+      tconts=unique(country.to.cont[wc,2])
+      conts[i]=paste(tconts,collapse=", ")
+    }
+  }
+  return(conts)
+}
+
 ## New functions for Step2_LocateFullNames.R
 get.given=function(x){
   if(grepl(", ",x)){
