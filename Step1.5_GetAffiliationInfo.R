@@ -26,12 +26,14 @@ for(i in journal_folders){
   }
   
   # Select relevant variables
-  # AF=authors, DI=doi, C1=affiliations, RP=corresponding info, PY=year
-  data.frame=data.frame %>% select(AF, DI, C1, RP, PY)
+  # AF=authors, DI=doi, C1=affiliations, RP=corresponding info, 
+  # DT=document type, PY=year
+  data.frame=data.frame %>% select(AF, DI, C1, RP, DT, PY)
   
   # Optional: subset data by date if you did so in the full data
-  #data.frame=data.frame[data.frame$PY>=1995,]
-  
+  # e.g., data.frame=data.frame[data.frame$PY>=1995,]
+  # e.g., data.frame=data.frame[data.frame$DT%in%c("Article","Review"),]
+ 
   # Append this new data to the full dataset
   affil.data=rbind(affil.data,data.frame)
   rm(data.frame, this.data.frame, files)
