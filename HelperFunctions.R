@@ -1,4 +1,43 @@
 ## New functions for Step1_CleanWOSFiles.R
+readFiles=function(...){
+  
+  
+  
+  arguments <- unlist(list(...))
+  
+  k=length(arguments)
+  
+  D=list()
+  
+  enc="UTF-8"
+  
+  origEnc=getOption("encoding")
+  
+  if (origEnc=="UTF-8"){options(encoding = "native.enc")}
+  
+  for (i in 1:k){
+    
+    D[[i]]=suppressWarnings(
+      
+      iconv(readLines(arguments[i],encoding = "UTF-8"),"latin1", "ASCII", sub="")
+      
+      #conv(readLines(arguments[[i]]))
+      
+    )
+    
+  }
+  
+  D=unlist(D)
+  
+  options(encoding = origEnc)
+  
+  Encoding(D) <- "UTF-8"
+  
+  return(D)
+  
+  
+  
+}
 createdf.internal=function(D){
   Papers = which(regexpr("PT ", D) == 1)
   nP = length(Papers)
