@@ -1,8 +1,8 @@
 setwd("path/to/project/folder") # Change to your project folder path
-source("HelperFunctions.R")
 library(bibliometrix)
 library(rvest)
 library(dplyr)
+source("HelperFunctions.R")
 
 # Change to the names of your journal folders within project folder
 journal_folders=c("journal1","journal2","journal3")
