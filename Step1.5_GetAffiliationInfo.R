@@ -27,8 +27,12 @@ for(i in journal_folders){
   
   # Select relevant variables
   # AF=authors, DI=doi, C1=affiliations, RP=corresponding info, 
-  # DT=document type, PY=year
-  data.frame=data.frame %>% select(AF, DI, C1, RP, DT, PY)
+  # SO=journal, TI=title, CR=references, DT=document type, 
+  # PD=month, PY=year
+  data.frame=data.frame %>% select(AF, DI, C1, RP, SO, 
+                                   TI, CR, DT, PD, PY)
+  data.frame$PD=unlist(lapply(1:nrow(data.frame),get.date,pd=data.frame$PD))
+  data.frame$PD=as.numeric(data.frame$PD)
   
   # Optional: subset data by date if you did so in the full data
   # e.g., data.frame=data.frame[data.frame$PY>=1995,]
