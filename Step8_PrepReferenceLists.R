@@ -34,6 +34,8 @@ log_seniority=log(num_papers)
 review=article.data$DT=="Review"
 log_teamsize=log(lengths(all_auth_names))
 journal=article.data$SO
+table(is.na(article.data$PD)) # do you have missing months? if so, consider filling them in with July so they don't get dropped
+# article.data$PD[is.na(article.data$PD)] = 6
 month_from_base=(article.data$PY-min(article.data$PY))+(article.data$PD/12)
 gender_cat=unlist(pbmclapply(article.data$AG,transform.cat,mc.cores=cores))
 
